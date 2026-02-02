@@ -1,34 +1,143 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Home SOC Lab</title>
+  <meta charset="UTF-8">
+  <title>Implementing a Home SOC Lab</title>
   <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
 
+<div class="container">
+
   <!-- Sidebar -->
-<div class="sidebar">
-  <h2>Waqas Ibrahim</h2>
-  <a href="../index.html">About Me</a>
-  <a href="home-soc.html">Home SOC Lab</a>
-</div>
-
-
-
-  <div class="content">
-    <h1>Implementing a Home SOC Lab</h1>
-
-    <p>
-      This walkthrough documents the setup of a realistic home SOC lab
-      using Active Directory, pfSense, and Wazuh SIEM.
-    </p>
-
-    <p>
-      This lab helped me understand log collection, detection workflows,
-      and SOC Level 1 investigation processes.
-    </p>
-
+  <div class="sidebar">
+    <h2>Waqas Ibrahim</h2>
+    <a href="../index.html">About Me</a>
+    <a href="home-soc.html">Home SOC Lab</a>
   </div>
+
+  <!-- Main Content -->
+  <main class="content">
+
+    <h1>Implementing a Realistic Home SOC Lab</h1>
+
+    <p>
+      This walkthrough documents the implementation of a realistic Home SOC lab
+      designed to simulate an enterprise network from a Blue Team / SOC analyst
+      perspective.
+    </p>
+
+    <p>
+      The goal of this lab was not just to install tools, but to understand how
+      logs flow across an enterprise environment and how SOC analysts detect,
+      triage, and investigate security events.
+    </p>
+
+    <h2>Objectives of the Lab</h2>
+    <ul>
+      <li>Simulate an enterprise Active Directory environment</li>
+      <li>Centralize logs using a SIEM</li>
+      <li>Monitor endpoints and servers</li>
+      <li>Understand SOC Level 1 investigation workflows</li>
+    </ul>
+
+    <h2>High-Level Architecture</h2>
+    <p>
+      The lab simulates a small enterprise network consisting of:
+    </p>
+
+    <ul>
+      <li>pfSense Firewall (Gateway & perimeter security)</li>
+      <li>Active Directory Domain Controller (DC01)</li>
+      <li>Windows endpoint (HR-PC01)</li>
+      <li>Ubuntu Server running Wazuh SIEM</li>
+    </ul>
+
+    <p>
+      All systems communicate within a private internal network.
+    </p>
+
+    <!-- Screenshot placeholder -->
+    <p><em>[Screenshot: Network Architecture Diagram]</em></p>
+
+    <h2>Network Design & IP Addressing</h2>
+    <p>
+      I used the private subnet <strong>192.168.10.0/24</strong>, which is commonly
+      found in enterprise environments and supports up to 254 hosts.
+    </p>
+
+    <p>
+      The Domain Controller also acts as the DNS server, which reflects a typical
+      Windows enterprise setup.
+    </p>
+
+    <p><em>[Screenshot: pfSense Interfaces & LAN IP]</em></p>
+
+    <h2>Active Directory Setup</h2>
+    <p>
+      I deployed Active Directory using the internal domain
+      <strong>threatwatch.local</strong>. This non-routable domain is safe for labs
+      and documentation and cannot be discovered externally.
+    </p>
+
+    <p>
+      Active Directory manages centralized authentication and identity for all
+      domain-joined systems.
+    </p>
+
+    <p><em>[Screenshot: Active Directory Users and Computers]</em></p>
+
+    <h2>Firewall & Routing (pfSense)</h2>
+    <p>
+      pfSense serves as the default gateway for all systems, providing NAT,
+      routing, and network visibility. This helped me understand north-south
+      traffic flow and the firewall’s role in a SOC environment.
+    </p>
+
+    <p><em>[Screenshot: pfSense Dashboard]</em></p>
+
+    <h2>Wazuh SIEM Deployment</h2>
+    <p>
+      Wazuh was deployed on an Ubuntu Server to centralize logs from endpoints
+      and servers. It provides visibility into authentication events, system
+      activity, and security alerts.
+    </p>
+
+    <p><em>[Screenshot: Wazuh Dashboard Overview]</em></p>
+
+    <h2>Agent Deployment & Enrollment</h2>
+    <p>
+      Wazuh agents were installed and authenticated on both the Domain Controller
+      and the Windows endpoint. This step demonstrated how endpoint telemetry is
+      securely forwarded to a SIEM.
+    </p>
+
+    <p><em>[Screenshot: Wazuh Agent Status]</em></p>
+
+    <h2>Security Events & SOC Visibility</h2>
+    <p>
+      Once fully integrated, login events, authentication failures, and system
+      activity became visible in the SIEM. This enabled basic alert triage and
+      investigation workflows.
+    </p>
+
+    <p><em>[Screenshot: Security Events in Wazuh]</em></p>
+
+    <h2>What This Lab Taught Me</h2>
+    <ul>
+      <li>How logs flow across an enterprise network</li>
+      <li>The importance of centralized monitoring</li>
+      <li>How SOC analysts investigate alerts</li>
+      <li>Common configuration and troubleshooting challenges</li>
+    </ul>
+
+    <h2>Next Steps</h2>
+    <p>
+      Future improvements include Sysmon integration, attack simulation,
+      MITRE ATT&CK mapping, and alert tuning to reduce noise.
+    </p>
+
+  </main>
 
 </div>
 
