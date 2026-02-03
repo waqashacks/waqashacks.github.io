@@ -22,35 +22,38 @@
     <h1>Implementing a Realistic Home SOC Lab</h1>
 
     <p>
-      This walkthrough documents the implementation of a realistic Home SOC lab
-      designed to simulate an enterprise network from a Blue Team / SOC analyst
-      perspective.
+      This walkthrough documents the implementation of a realistic Home SOC lab designed to simulate an enterprise network from a Blue Team / SOC analyst perspective.
     </p>
 
     <p>
-      The goal of this lab was not just to install tools, but to understand how
-      logs flow across an enterprise environment and how SOC analysts detect,
-      triage, and investigate security events.
+      The goal of this lab was not just to install tools, but to understand how logs flow across an enterprise environment and how SOC analysts detect, triage, and investigate security events.
+    </p>
+
+    <p>
+      Rather than following a simplified lab guide, I designed, deployed, troubleshot, and validated each component as it would exist in a real organization.
     </p>
 
     <h2>Objectives of the Lab</h2>
     <ul>
+      <li>Build an enterprise-style internal network</li>
       <li>Simulate an enterprise Active Directory environment</li>
       <li>Centralize logs using a SIEM</li>
       <li>Monitor endpoints and servers</li>
       <li>Understand SOC Level 1 investigation workflows</li>
+      <li>Strengthen Helpdesk-level troubleshooting skills</li>
     </ul>
 
     <h2>High-Level Architecture</h2>
+    
     <p>
       The lab simulates a small enterprise network consisting of:
     </p>
 
     <ul>
-      <li>pfSense Firewall (Gateway & perimeter security)</li>
-      <li>Active Directory Domain Controller (DC01)</li>
-      <li>Windows endpoint (HR-PC01)</li>
-      <li>Ubuntu Server running Wazuh SIEM</li>
+      <li><strong>pfSense Firewall</strong> - Gateway, NAT, routing, and perimeter security</li>
+      <li><strong>DC01</strong> - Active Directory Domain Controller and DNS Server</li>
+      <li><strong>HR-PC01</strong> - Domain-joined Windows endpoint</li>
+      <li><strong>Ubuntu Server</strong> - Running Wazuh SIEM Manager</li>
     </ul>
 
     <p>
@@ -61,80 +64,311 @@
     <p><em>[Screenshot: Network Architecture Diagram]</em></p>
 
     <h2>Network Design & IP Addressing</h2>
+    
     <p>
-      I used the private subnet <strong>192.168.10.0/24</strong>, which is commonly
-      found in enterprise environments and supports up to 254 hosts.
+      I used the private subnet <strong>192.168.10.0/24</strong>, which is commonly found in enterprise environments and supports up to 254 hosts.
     </p>
 
     <p>
-      The Domain Controller also acts as the DNS server, which reflects a typical
-      Windows enterprise setup.
+      This subnet size is ideal for:
+    </p>
+    <ul>
+      <li>Simple routing and troubleshooting</li>
+      <li>Lab scalability</li>
+      <li>Mimicking real enterprise internal networks</li>
+    </ul>
+
+    <p>
+      The Domain Controller also acts as the DNS server, which reflects a typical Windows enterprise setup.
     </p>
 
     <p><em>[Screenshot: pfSense Interfaces & LAN IP]</em></p>
 
-    <h2>Active Directory Setup</h2>
+    <h2>pfSense Firewall – Network Perimeter</h2>
+
     <p>
-      I deployed Active Directory using the internal domain
-      <strong>threatwatch.local</strong>. This non-routable domain is safe for labs
-      and documentation and cannot be discovered externally.
+      pfSense serves as the default gateway for all systems, providing NAT, routing, and network visibility.
     </p>
 
     <p>
-      Active Directory manages centralized authentication and identity for all
-      domain-joined systems.
+      I chose pfSense because it is widely used in enterprises, MSSPs, and SOC training environments. It provides firewall rules, NAT, DHCP, and routing visibility.
     </p>
 
-    <p><em>[Screenshot: Active Directory Users and Computers]</em></p>
+    <h3>Configuration</h3>
+    <ul>
+      <li><strong>WAN:</strong> NAT (VMnet8) for Internet access</li>
+      <li><strong>LAN:</strong> 192.168.10.1/24</li>
+      <li><strong>Role:</strong> Acts as the default gateway for all internal systems</li>
+    </ul>
 
-    <h2>Firewall & Routing (pfSense)</h2>
     <p>
-      pfSense serves as the default gateway for all systems, providing NAT,
-      routing, and network visibility. This helped me understand north-south
-      traffic flow and the firewall’s role in a SOC environment.
+      This setup allowed internal machines to communicate with each other and access the internet securely. It helped me understand north-south traffic flow and the firewall's role in a SOC environment.
     </p>
+
+    <h3>SOC Relevance</h3>
+    <p>
+      From a SOC perspective, pfSense is critical because:
+    </p>
+    <ul>
+      <li>It controls ingress/egress traffic</li>
+      <li>Firewall logs can indicate scanning or exfiltration attempts</li>
+      <li>Network issues often surface here first</li>
+    </ul>
 
     <p><em>[Screenshot: pfSense Dashboard]</em></p>
 
-    <h2>Wazuh SIEM Deployment</h2>
+    <h2>Active Directory Domain Controller (DC01)</h2>
+
     <p>
-      Wazuh was deployed on an Ubuntu Server to centralize logs from endpoints
-      and servers. It provides visibility into authentication events, system
-      activity, and security alerts.
+      Active Directory is the heart of enterprise identity. Most attacks involve credential theft, lateral movement, and privilege escalation.
+    </p>
+
+    <p>
+      Running AD allows realistic SOC detections and helps understand how authentication flows work in enterprise environments.
+    </p>
+
+    <h3>Configuration</h3>
+    <ul>
+      <li><strong>Hostname:</strong> DC01</li>
+      <li><strong>IP Address:</strong> 192.168.10.10 (static)</li>
+      <li><strong>Roles:</strong> Active Directory Domain Services, DNS Server</li>
+      <li><strong>Domain:</strong> threatwatch.local</li>
+    </ul>
+
+    <p>
+      I deployed Active Directory using the internal domain <strong>threatwatch.local</strong>. This non-routable domain is safe for labs and documentation and cannot be discovered externally.
+    </p>
+
+    <p>
+      Publishing an internal domain name like .local in a blog does not expose your network. Attackers cannot reach .local domains from the internet.
+    </p>
+
+    <p>
+      Active Directory manages centralized authentication and identity for all domain-joined systems.
+    </p>
+
+    <h3>DNS Architecture – Why It Matters</h3>
+
+    <p>
+      DNS is often overlooked, but it plays a critical role in security. Domain authentication depends on DNS—Kerberos, LDAP, and AD all require correct name resolution.
+    </p>
+
+    <p>
+      SOC analysts frequently investigate DNS anomalies. All internal systems use DNS Server: 192.168.10.10.
+    </p>
+
+    <p>
+      This configuration allows:
+    </p>
+    <ul>
+      <li>Central visibility</li>
+      <li>Consistent authentication behavior</li>
+      <li>Easier troubleshooting</li>
+    </ul>
+
+    <p><em>[Screenshot: Active Directory Users and Computers]</em></p>
+
+    <h2>Windows Endpoint (HR-PC01)</h2>
+
+    <p>
+      HR-PC01 simulates a real employee workstation with domain join capabilities, Group Policy enforcement, and security log generation.
+    </p>
+
+    <h3>Configuration</h3>
+    <ul>
+      <li><strong>IP Assignment:</strong> DHCP-assigned</li>
+      <li><strong>Domain:</strong> Joined to threatwatch.local</li>
+      <li><strong>Monitoring:</strong> Wazuh agent installed</li>
+    </ul>
+
+    <h3>SOC Perspective</h3>
+
+    <p>
+      Endpoints are the most common entry point for attackers through phishing, malware, and credential abuse.
+    </p>
+
+    <p>
+      Monitoring this machine provides visibility into:
+    </p>
+    <ul>
+      <li>Logon events</li>
+      <li>Process creation</li>
+      <li>Policy changes</li>
+    </ul>
+
+    <h2>Wazuh SIEM Manager (Ubuntu Server)</h2>
+
+    <p>
+      Wazuh was deployed on an Ubuntu Server to centralize logs from endpoints and servers. It provides visibility into authentication events, system activity, and security alerts.
+    </p>
+
+    <p>
+      I chose Wazuh because it is:
+    </p>
+    <ul>
+      <li>Open-source</li>
+      <li>SOC-friendly</li>
+      <li>Actively used in real environments</li>
+    </ul>
+
+    <h3>Configuration</h3>
+    <ul>
+      <li><strong>IP Address:</strong> 192.168.10.20</li>
+      <li><strong>Components:</strong> Wazuh Manager + Dashboard</li>
+      <li><strong>Agents:</strong> Deployed to DC01 and HR-PC01</li>
+    </ul>
+
+    <p>
+      Wazuh provides log collection, correlation rules, alerts, and dashboards for comprehensive security monitoring.
     </p>
 
     <p><em>[Screenshot: Wazuh Dashboard Overview]</em></p>
 
-    <h2>Agent Deployment & Enrollment</h2>
+    <h2>Agent Deployment & Authentication</h2>
+
     <p>
-      Wazuh agents were installed and authenticated on both the Domain Controller
-      and the Windows endpoint. This step demonstrated how endpoint telemetry is
-      securely forwarded to a SIEM.
+      Agent enrollment ensures that only trusted endpoints send logs, logs are correctly mapped to hostnames, and duplicate or rogue agents are rejected.
     </p>
+
+    <p>
+      Wazuh agents were installed and authenticated on both the Domain Controller and the Windows endpoint. This step demonstrated how endpoint telemetry is securely forwarded to a SIEM.
+    </p>
+
+    <p>
+      During setup, duplicate agent names caused authentication errors. This mimics real SOC troubleshooting scenarios and reinforced the importance of:
+    </p>
+    <ul>
+      <li>Attention to host naming</li>
+      <li>Understanding manager-agent trust relationships</li>
+    </ul>
 
     <p><em>[Screenshot: Wazuh Agent Status]</em></p>
 
-    <h2>Security Events & SOC Visibility</h2>
+    <h2>Log Flow Explained (SOC View)</h2>
+
     <p>
-      Once fully integrated, login events, authentication failures, and system
-      activity became visible in the SIEM. This enabled basic alert triage and
-      investigation workflows.
+      Understanding how logs flow through the environment is crucial for SOC analysts. Here's an example log flow:
     </p>
+
+    <ol>
+      <li>User logs into HR-PC01</li>
+      <li>Authentication request sent to DC01</li>
+      <li>DC01 validates credentials via Kerberos</li>
+      <li>Security event generated on DC01</li>
+      <li>Event forwarded to Wazuh via agent</li>
+      <li>Wazuh parses and correlates logs</li>
+      <li>Alerts appear in dashboard (if rules match)</li>
+    </ol>
+
+    <p>
+      This is exactly how real SOC pipelines work.
+    </p>
+
+    <h2>Security Events & SOC Visibility</h2>
+
+    <p>
+      Once fully integrated, login events, authentication failures, and system activity became visible in the SIEM.
+    </p>
+
+    <p>
+      Each endpoint sends Windows Security logs, authentication events, and system events to the central SIEM for analysis.
+    </p>
+
+    <p>
+      This enabled basic alert triage and investigation workflows, allowing me to practice:
+    </p>
+    <ul>
+      <li>Identifying false positives</li>
+      <li>Understanding alert context</li>
+      <li>Knowing when escalation is required</li>
+    </ul>
 
     <p><em>[Screenshot: Security Events in Wazuh]</em></p>
 
-    <h2>What This Lab Taught Me</h2>
+    <h2>What This Lab Taught Me – SOC Level 1 Skills</h2>
+
+    <h3>Log Interpretation</h3>
+    <ul>
+      <li>Understanding Windows Security Event IDs</li>
+      <li>Correlating authentication failures</li>
+      <li>Recognizing abnormal patterns</li>
+    </ul>
+
+    <h3>Alert Triage</h3>
+    <ul>
+      <li>Identifying false positives</li>
+      <li>Understanding alert context</li>
+      <li>Knowing when escalation is required</li>
+    </ul>
+
+    <h3>Network Awareness</h3>
+    <ul>
+      <li>Diagnosing DNS failures</li>
+      <li>Resolving gateway misconfigurations</li>
+      <li>Understanding NAT vs routing issues</li>
+    </ul>
+
+    <h2>What This Lab Taught Me – Helpdesk Level 1 Skills</h2>
+
+    <p>
+      This lab unintentionally strengthened Helpdesk fundamentals, which are critical for SOC analysts:
+    </p>
+
+    <ul>
+      <li>Troubleshooting DNS issues</li>
+      <li>Resolving authentication failures</li>
+      <li>Fixing connectivity problems</li>
+      <li>Understanding "no internet" vs "no DNS"</li>
+      <li>Verifying gateways and IP configurations</li>
+    </ul>
+
+    <p>
+      Many SOC alerts are actually caused by misconfigurations, not attacks. Knowing the difference is essential.
+    </p>
+
+    <h2>Key Takeaways</h2>
+
+    <p>
+      This was not just a technical exercise—it was an operational mindset shift. I learned:
+    </p>
+
     <ul>
       <li>How logs flow across an enterprise network</li>
+      <li>How security tools fit together in a SOC environment</li>
+      <li>Why identity is central to SOC operations</li>
+      <li>How attackers abuse authentication and DNS</li>
       <li>The importance of centralized monitoring</li>
-      <li>How SOC analysts investigate alerts</li>
+      <li>How SOC analysts investigate alerts, not just respond to them</li>
       <li>Common configuration and troubleshooting challenges</li>
     </ul>
 
-    <h2>Next Steps</h2>
     <p>
-      Future improvements include Sysmon integration, attack simulation,
-      MITRE ATT&CK mapping, and alert tuning to reduce noise.
+      This lab bridges the gap between theory and practice, and between student knowledge and SOC analyst readiness.
+    </p>
+
+    <h2>Next Steps</h2>
+    
+    <p>
+      Future improvements and expansions include:
+    </p>
+
+    <ul>
+      <li>Sysmon integration for enhanced process and network monitoring</li>
+      <li>Attack simulation to test detection capabilities</li>
+      <li>MITRE ATT&CK mapping for threat intelligence</li>
+      <li>Alert tuning to reduce noise and false positives</li>
+      <li>Incident response playbook development</li>
+      <li>Detection engineering and custom rule creation</li>
+    </ul>
+
+    <h2>Final Thoughts</h2>
+
+    <p>
+      Building this Home SOC lab gave me practical exposure to enterprise security architecture, SOC workflows, and real troubleshooting scenarios.
+    </p>
+
+    <p>
+      It strengthened my readiness for SOC Level 1 roles, Helpdesk-to-SOC transitions, and Blue Team security operations.
     </p>
 
   </main>
