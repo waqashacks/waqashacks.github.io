@@ -156,7 +156,7 @@
       All systems are communicating within the <strong>192.168.10.0/24</strong> subnet and are fully integrated with Wazuh agents for log forwarding.
     </p>
 
-    <img src="Active_Agents.png" alt="Active Wazuh Agents - DC01 and HR-PC01" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="images/Active_Agents.png" alt="Active Wazuh Agents - DC01 and HR-PC01" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
 
     <p>
       As shown above, both <strong>DC01</strong> and <strong>HR-PC01</strong> are active and reporting to the Wazuh manager. This confirms that authentication events from both systems will be captured and analyzed.
@@ -174,7 +174,7 @@
       An attacker (or in this case, a test scenario) attempts to authenticate to a domain-joined Windows workstation using stolen or guessed credentials. The password is incorrect, resulting in multiple failed authentication attempts.
     </p>
 
-    <img src="unsuccesful_logon.png" alt="Windows Login - Failed Authentication Attempt" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="images/unsuccesful_logon.png" alt="Windows Login - Failed Authentication Attempt" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
 
     <p>
       The Windows login screen displays the message: <strong>"The password is incorrect. Try again."</strong>
@@ -233,7 +233,7 @@
       After the failed login attempts, Wazuh immediately detected and correlated the events:
     </p>
 
-    <img src="Wazuh_security_events_of_failed_logon.png" alt="Wazuh Security Events - Failed Login Detections" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="images/Wazuh_security_events_of_failed_logon.png" alt="Wazuh Security Events - Failed Login Detections" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
 
     <p>
       The Wazuh dashboard shows multiple alerts for <strong>HR-PC01</strong> with the description:
@@ -275,7 +275,7 @@
       Clicking on one of the alerts in Wazuh reveals the full event details:
     </p>
 
-    <img src="wazuh_system_message_of_failed_logon.png" alt="Wazuh Event Detail - Failed Logon Information" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="images/wazuh_system_message_of_failed_logon.png" alt="Wazuh Event Detail - Failed Logon Information" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
 
     <h3>Event Breakdown</h3>
 
