@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Detecting Authentication Attacks - SOC Lab Investigation</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    /* Additional styling for better readability */
+    .content {
+      max-width: 900px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+    
+    .content h1 {
+      font-size: 2.2em;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #e1e4e8;
+      padding-bottom: 10px;
+    }
+    
+    .content h2 {
+      font-size: 1.6em;
+      margin-top: 40px;
+      margin-bottom: 15px;
+    }
+    
+    .content h3 {
+      font-size: 1.3em;
+      margin-top: 25px;
+      margin-bottom: 12px;
+    }
+    
+    .content p {
+      margin-bottom: 15px;
+    }
+    
+    .content ul, .content ol {
+      margin-bottom: 20px;
+      padding-left: 30px;
+    }
+    
+    .content li {
+      margin-bottom: 8px;
+    }
+    
+    .content img {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .alert-box {
+      background-color: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    
+    .info-box {
+      background-color: #d1ecf1;
+      border-left: 4px solid #17a2b8;
+      padding: 15px 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    
+    .code-box {
+      background-color: #f6f8fa;
+      border: 1px solid #d1d5da;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>Waqas Ibrahim</h2>
+    <a href="../index.html">About Me</a>
+    <a href="home-soc.html">Home SOC Lab</a>
+    <a href="authentication-attacks.html">Authentication Attacks</a>
+  </div>
+
+  <!-- Main Content -->
+  <main class="content">
+
+    <h1>Detecting Authentication Attacks in a Home SOC Lab</h1>
+
+    <p>
+      Building a SOC lab is one thing — actually using it to detect real attacks is another. In this walkthrough, I simulate authentication-based attacks and demonstrate how a SOC analyst would detect, investigate, and respond to them.
+    </p>
+
+    <p>
+      This isn't just about running tools. It's about understanding the complete investigation workflow from initial detection to incident documentation.
+    </p>
+
+    <h2>Introduction</h2>
+
+    <p>
+      Authentication attacks are among the most common initial access methods used by attackers. From credential stuffing to brute force attacks, unauthorized login attempts are a daily occurrence in enterprise environments.
+    </p>
+
+    <p>
+      As a SOC analyst, your ability to quickly identify failed authentication attempts, distinguish between legitimate mistakes and malicious activity, and respond appropriately is critical.
+    </p>
+
+    <p>
+      In this lab exercise, I simulate failed login attempts against a domain-joined endpoint and demonstrate how these events flow through the security stack — from Windows Event Logs to SIEM alerts.
+    </p>
+
+    <h2>Why Authentication Attacks Matter</h2>
+
+    <p>
+      Authentication is the first line of defense. If an attacker can authenticate as a legitimate user, they can:
+    </p>
+
+    <ul>
+      <li>Bypass perimeter security controls</li>
+      <li>Access internal resources and sensitive data</li>
+      <li>Move laterally across the network</li>
+      <li>Establish persistence for long-term access</li>
+      <li>Avoid detection by appearing as a normal user</li>
+    </ul>
+
+    <p>
+      Understanding how to detect authentication attacks is fundamental to SOC operations. It's often the first indicator of compromise (IOC) that alerts analysts to an ongoing attack.
+    </p>
+
+    <div class="alert-box">
+      <strong>Real-World Impact:</strong> According to industry reports, over 80% of data breaches involve compromised credentials. This makes authentication monitoring one of the highest-value activities a SOC can perform.
+    </div>
+
+    <h2>Lab Architecture Recap</h2>
+
+    <p>
+      Before diving into the attack simulation, let's recap the lab environment:
+    </p>
+
+    <ul>
+      <li><strong>DC01:</strong> Windows Server 2022 - Active Directory Domain Controller (192.168.10.10)</li>
+      <li><strong>HR-PC01:</strong> Windows 11 - Domain-joined endpoint (192.168.10.128)</li>
+      <li><strong>Wazuh SIEM:</strong> Ubuntu Server - Centralized log collection and analysis (192.168.10.20)</li>
+      <li><strong>pfSense:</strong> Firewall and network gateway (192.168.10.1)</li>
+    </ul>
+
+    <p>
+      All systems are communicating within the <strong>192.168.10.0/24</strong> subnet and are fully integrated with Wazuh agents for log forwarding.
+    </p>
+
+    <img src="Active_Agents.png" alt="Active Wazuh Agents - DC01 and HR-PC01" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+
+    <p>
+      As shown above, both <strong>DC01</strong> and <strong>HR-PC01</strong> are active and reporting to the Wazuh manager. This confirms that authentication events from both systems will be captured and analyzed.
+    </p>
+
+    <h2>Simulating Failed Login Attempts</h2>
+
+    <p>
+      To simulate a real-world scenario, I attempted to log in to the <strong>HR-PC01</strong> endpoint using an incorrect password for the user account <strong>hr.jdoe</strong> (John Doe).
+    </p>
+
+    <h3>Attack Scenario</h3>
+
+    <p>
+      An attacker (or in this case, a test scenario) attempts to authenticate to a domain-joined Windows workstation using stolen or guessed credentials. The password is incorrect, resulting in multiple failed authentication attempts.
+    </p>
+
+    <img src="unsuccesful_logon.png" alt="Windows Login - Failed Authentication Attempt" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+
+    <p>
+      The Windows login screen displays the message: <strong>"The password is incorrect. Try again."</strong>
+    </p>
+
+    <p>
+      This seems like a simple user error on the surface, but from a SOC perspective, this could be:
+    </p>
+
+    <ul>
+      <li>A legitimate user who forgot their password</li>
+      <li>An attacker attempting credential stuffing</li>
+      <li>An automated brute force attack</li>
+      <li>A compromised account being tested</li>
+    </ul>
+
+    <p>
+      The SOC analyst's job is to determine which scenario is occurring based on context, frequency, and other indicators.
+    </p>
+
+    <h2>Windows Event Log Analysis</h2>
+
+    <p>
+      When a login fails on a Windows system, several events are generated. The most important one for authentication failures is <strong>Event ID 4625 - An account failed to log on</strong>.
+    </p>
+
+    <h3>What Event ID 4625 Tells Us</h3>
+
+    <p>
+      Event ID 4625 is logged on the target system (in this case, HR-PC01) and provides critical forensic information:
+    </p>
+
+    <ul>
+      <li><strong>Account Name:</strong> Which user account was targeted</li>
+      <li><strong>Account Domain:</strong> The domain the account belongs to (THREATWATCH)</li>
+      <li><strong>Failure Reason:</strong> Why the authentication failed (e.g., bad password, unknown user)</li>
+      <li><strong>Logon Type:</strong> How the authentication was attempted (interactive, network, etc.)</li>
+      <li><strong>Source Workstation:</strong> Where the attempt originated from</li>
+      <li><strong>Source IP Address:</strong> Network location of the authentication attempt</li>
+      <li><strong>Process Information:</strong> Which process initiated the logon attempt</li>
+    </ul>
+
+    <div class="info-box">
+      <strong>SOC Analyst Tip:</strong> Event ID 4625 is your primary indicator for failed authentication. However, context matters. A single failed login is normal. Ten failed logins in one minute is suspicious. Fifty failed logins across multiple accounts in ten minutes is definitely an attack.
+    </div>
+
+    <h2>SIEM Detection with Wazuh</h2>
+
+    <p>
+      The real value of a SIEM comes from centralized visibility. While Windows Event Logs are stored locally on each system, Wazuh collects, correlates, and presents these events in a centralized dashboard.
+    </p>
+
+    <h3>Wazuh Security Events Dashboard</h3>
+
+    <p>
+      After the failed login attempts, Wazuh immediately detected and correlated the events:
+    </p>
+
+    <img src="Wazuh_security_events_of_failed_logon.png" alt="Wazuh Security Events - Failed Login Detections" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+
+    <p>
+      The Wazuh dashboard shows multiple alerts for <strong>HR-PC01</strong> with the description:
+    </p>
+
+    <div class="code-box">
+      <strong>Rule ID:</strong> 60122<br>
+      <strong>Description:</strong> Logon failure - Unknown user or bad password<br>
+      <strong>Level:</strong> 5 (Medium)<br>
+      <strong>Technique(s):</strong> T1078 (Valid Accounts), T1531 (Account Access Removal)<br>
+      <strong>Tactic(s):</strong> Defense Evasion, Persistence, Privilege Escalation, Initial Access, Impact
+    </div>
+
+    <p>
+      Notice how Wazuh automatically maps the alert to <strong>MITRE ATT&CK</strong> techniques. This provides immediate context about what type of attack this behavior might indicate.
+    </p>
+
+    <h3>Alert Timeline Analysis</h3>
+
+    <p>
+      The security alerts timeline shows multiple failed authentication attempts occurring around 01:30 UTC:
+    </p>
+
+    <ul>
+      <li>Feb 4, 2026 @ 01:32:06.797</li>
+      <li>Feb 4, 2026 @ 01:31:55.030</li>
+      <li>Feb 4, 2026 @ 01:31:43.180</li>
+      <li>Feb 4, 2026 @ 01:31:33.355</li>
+      <li>Feb 4, 2026 @ 01:31:23.681</li>
+    </ul>
+
+    <p>
+      Five failed attempts within approximately one minute. This pattern is important for correlation.
+    </p>
+
+    <h2>Deep Dive: Event Details</h2>
+
+    <p>
+      Clicking on one of the alerts in Wazuh reveals the full event details:
+    </p>
+
+    <img src="wazuh_system_message_of_failed_logon.png" alt="Wazuh Event Detail - Failed Logon Information" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+
+    <h3>Event Breakdown</h3>
+
+    <p>
+      The detailed event message provides forensic-level information:
+    </p>
+
+    <div class="code-box">
+      <strong>Message:</strong> "An account failed to log on."<br><br>
+
+      <strong>Subject:</strong><br>
+      &nbsp;&nbsp;Security ID: S-1-5-18<br>
+      &nbsp;&nbsp;Account Name: HR-PC01$<br>
+      &nbsp;&nbsp;Account Domain: THREATWATCH<br>
+      &nbsp;&nbsp;Logon ID: 0x3E7<br><br>
+
+      <strong>Logon Type:</strong> 2 (Interactive logon)<br><br>
+
+      <strong>Account For Which Logon Failed:</strong><br>
+      &nbsp;&nbsp;Security ID: S-1-0-0<br>
+      &nbsp;&nbsp;Account Name: hr.jdoe@threatwatch.local<br>
+      &nbsp;&nbsp;Account Domain: -<br><br>
+
+      <strong>Failure Information:</strong><br>
+      &nbsp;&nbsp;Failure Reason: Unknown user name or bad password<br>
+      &nbsp;&nbsp;Status: 0xC000006D<br>
+      &nbsp;&nbsp;Sub Status: 0xC000006A<br><br>
+
+      <strong>Process Information:</strong><br>
+      &nbsp;&nbsp;Caller Process ID: 0x670<br>
+      &nbsp;&nbsp;Caller Process Name: C:\Windows\System32\svchost.exe<br><br>
+
+      <strong>Network Information:</strong><br>
+      &nbsp;&nbsp;Workstation Name: HR-PC01<br>
+      &nbsp;&nbsp;Source Network Address: 127.0.0.1<br>
+      &nbsp;&nbsp;Source Port: 0<br><br>
+
+      <strong>Detailed Authentication Information:</strong><br>
+      &nbsp;&nbsp;Logon Process: User32<br>
+      &nbsp;&nbsp;Authentication Package: Negotiate<br>
+    </div>
+
+    <h3>Key Observations</h3>
+
+    <p>
+      From this event, we can determine:
+    </p>
+
+    <ul>
+      <li><strong>Who:</strong> User account "hr.jdoe@threatwatch.local" attempted to authenticate</li>
+      <li><strong>What:</strong> The login attempt failed due to bad credentials</li>
+      <li><strong>Where:</strong> The attempt was made locally on HR-PC01 (127.0.0.1)</li>
+      <li><strong>When:</strong> February 4, 2026, multiple times within one minute</li>
+      <li><strong>How:</strong> Interactive logon (Logon Type 2) - someone physically at the machine</li>
+      <li><strong>Why it failed:</strong> Status code 0xC000006A indicates "bad password"</li>
+    </ul>
+
+    <div class="info-box">
+      <strong>Status Code Reference:</strong><br>
+      - 0xC000006A = User logged on with misspelled or bad password<br>
+      - 0xC000006D = Bad username or authentication information<br>
+      - 0xC0000064 = User account does not exist<br>
+      - 0xC0000234 = User account locked out
+    </div>
+
+    <h2>SOC Level 1 Investigation Workflow</h2>
+
+    <p>
+      As a SOC L1 analyst, here's how I would investigate this alert in a real environment:
+    </p>
+
+    <h3>Step 1: Initial Triage</h3>
+
+    <ul>
+      <li>Confirm the alert is not a false positive</li>
+      <li>Identify the affected account: <strong>hr.jdoe@threatwatch.local</strong></li>
+      <li>Identify the affected system: <strong>HR-PC01 (192.168.10.128)</strong></li>
+      <li>Note the timestamp and frequency of failed attempts</li>
+    </ul>
+
+    <h3>Step 2: Context Gathering</h3>
+
+    <ul>
+      <li>Is this user account active and legitimate?</li>
+      <li>Is the user known to be traveling or working remotely?</li>
+      <li>Have there been similar alerts for this user recently?</li>
+      <li>Is HR-PC01 the user's assigned workstation?</li>
+    </ul>
+
+    <h3>Step 3: Pattern Analysis</h3>
+
+    <ul>
+      <li>How many failed attempts occurred?</li>
+      <li>What is the time interval between attempts?</li>
+      <li>Are the attempts coming from the same source?</li>
+      <li>Are multiple accounts being targeted from the same source?</li>
+    </ul>
+
+    <h3>Step 4: Determine Severity</h3>
+
+    <p>
+      Based on the investigation, I would classify this as:
+    </p>
+
+    <div class="code-box">
+      <strong>Severity:</strong> Low to Medium<br>
+      <strong>Reason:</strong> Localized failed authentication (127.0.0.1 = local login)<br>
+      <strong>Likely Scenario:</strong> User forgot password or mistyped credentials<br>
+      <strong>Action Required:</strong> Monitor for continued failures; escalate if account locks
+    </div>
+
+    <h3>Step 5: Response Actions</h3>
+
+    <p>
+      For this specific scenario:
+    </p>
+
+    <ul>
+      <li>✅ Document the event in the incident tracking system</li>
+      <li>✅ Create a watchlist for the user account</li>
+      <li>✅ Monitor for successful logins after failed attempts</li>
+      <li>✅ If failures continue, contact the user or reset the password</li>
+      <li>✅ Check for similar patterns across other endpoints</li>
+    </ul>
+
+    <h2>Account Lockout Scenario</h2>
+
+    <p>
+      In a real enterprise environment, Active Directory is typically configured with account lockout policies. After a certain number of failed attempts (often 5-10), the account is automatically locked.
+    </p>
+
+    <h3>Why Account Lockouts Matter</h3>
+
+    <p>
+      Account lockouts serve two purposes:
+    </p>
+
+    <ul>
+      <li><strong>Security:</strong> Prevents brute force attacks by limiting authentication attempts</li>
+      <li><strong>Detection:</strong> Generates additional alerts when an account is locked</li>
+    </ul>
+
+    <p>
+      However, account lockouts also create operational challenges:
+    </p>
+
+    <ul>
+      <li>Legitimate users get locked out and can't work</li>
+      <li>Helpdesk receives increased ticket volume</li>
+      <li>Attackers may intentionally lock accounts to cause disruption</li>
+    </ul>
+
+    <div class="alert-box">
+      <strong>Helpdesk Integration:</strong> This is where SOC and Helpdesk collaboration is critical. A locked account might be a security incident or just a user who needs their password reset. Understanding the context helps both teams respond appropriately.
+    </div>
+
+    <h2>Lessons Learned - SOC Analyst Perspective</h2>
+
+    <p>
+      This exercise reinforced several important SOC analyst skills:
+    </p>
+
+    <h3>1. Log Correlation is Essential</h3>
+
+    <p>
+      Seeing failed login events in a centralized SIEM provides much better visibility than checking individual Windows Event Logs on each endpoint. Wazuh allowed me to see the pattern across multiple events instantly.
+    </p>
+
+    <h3>2. Context Determines Severity</h3>
+
+    <p>
+      Five failed logins in one minute from 127.0.0.1 (local system) is very different from five failed logins in one minute from an external IP in a foreign country. Always consider the full context.
+    </p>
+
+    <h3>3. MITRE ATT&CK Mapping is Valuable</h3>
+
+    <p>
+      Wazuh's automatic mapping to MITRE ATT&CK techniques (T1078, T1531) immediately tells me what type of attack this behavior might indicate, even without deep forensic analysis.
+    </p>
+
+    <h3>4. Status Codes Matter</h3>
+
+    <p>
+      Understanding Windows status codes (0xC000006A vs 0xC0000064 vs 0xC0000234) helps differentiate between bad passwords, non-existent accounts, and locked accounts. Each requires a different response.
+    </p>
+
+    <h2>Lessons Learned - Helpdesk Perspective</h2>
+
+    <p>
+      Interestingly, this exercise also highlighted Helpdesk-relevant skills:
+    </p>
+
+    <h3>1. Password Reset Best Practices</h3>
+
+    <p>
+      When a user calls saying "I can't log in," the Helpdesk needs to verify:
+    </p>
+
+    <ul>
+      <li>Is the account locked? (Event ID 4740)</li>
+      <li>Is the password expired? (Event ID 4723)</li>
+      <li>Is Caps Lock on? (seriously, it happens)</li>
+      <li>Is the user typing the correct username?</li>
+    </ul>
+
+    <h3>2. When to Escalate to SOC</h3>
+
+    <p>
+      If a Helpdesk analyst sees multiple lockouts across different accounts or unusual failure patterns, it should be escalated to the SOC for investigation. This could indicate an attack.
+    </p>
+
+    <h3>3. Documentation is Critical</h3>
+
+    <p>
+      Every password reset, account unlock, and authentication-related ticket should be logged. This creates an audit trail that can be correlated with security events later.
+    </p>
+
+    <h2>Key Takeaways</h2>
+
+    <p>
+      This lab exercise demonstrated a complete SOC investigation workflow:
+    </p>
+
+    <ul>
+      <li><strong>Detection:</strong> Wazuh SIEM detected failed authentication attempts in real-time</li>
+      <li><strong>Analysis:</strong> Event details provided complete forensic context</li>
+      <li><strong>Investigation:</strong> SOC L1 workflow guided proper triage and response</li>
+      <li><strong>Documentation:</strong> Events were logged, correlated, and mapped to MITRE ATT&CK</li>
+      <li><strong>Response:</strong> Appropriate actions determined based on context and severity</li>
+    </ul>
+
+    <div class="info-box">
+      <strong>Real-World Application:</strong> This exact scenario happens hundreds of times per day in enterprise SOCs. The ability to quickly triage authentication alerts, distinguish between normal and malicious behavior, and respond appropriately is a core SOC analyst skill.
+    </div>
+
+    <h2>Next Steps</h2>
+
+    <p>
+      Future expansions of this lab will include:
+    </p>
+
+    <ul>
+      <li><strong>Brute Force Simulation:</strong> Automated credential attacks from external sources</li>
+      <li><strong>Credential Stuffing:</strong> Testing stolen credentials across multiple accounts</li>
+      <li><strong>Kerberoasting:</strong> Detecting Kerberos ticket abuse</li>
+      <li><strong>Pass-the-Hash:</strong> Lateral movement with stolen NTLM hashes</li>
+      <li><strong>Account Lockout Policy Testing:</strong> Fine-tuning lockout thresholds</li>
+      <li><strong>Automated Response:</strong> Creating playbooks to automatically respond to authentication attacks</li>
+    </ul>
+
+    <h2>Final Thoughts</h2>
+
+    <p>
+      Authentication monitoring is one of the most important functions a SOC performs. While this was a simple failed login scenario, the investigation process is the same whether it's a user who forgot their password or an APT group attempting to breach your network.
+    </p>
+
+    <p>
+      The key is building the muscle memory to properly analyze events, gather context, and make informed decisions quickly. Every alert is an opportunity to sharpen these skills.
+    </p>
+
+    <p>
+      This lab gave me hands-on practice with the complete detection and investigation workflow — from initial alert to final documentation. It's exactly the kind of work I want to do as a Junior SOC Analyst.
+    </p>
+
+  </main>
+
+</div>
+
+</body>
+</html>
