@@ -100,7 +100,6 @@
 
 <div class="container">
 
-
   <!-- Sidebar -->
   <div class="sidebar">
     <h2>Waqas Ibrahim</h2>
@@ -263,7 +262,7 @@
       In the Wazuh dashboard, I navigated to <strong>Management → Endpoints → Agents</strong> to verify that HR-PC01 was actively reporting.
     </p>
 
-    <img src="HR-PC01_Agent_is_live.png" alt="Wazuh Agent Active on HR-PC01" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="HR-PC01 Agent is live.png" alt="Wazuh Agent Active on HR-PC01" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
 
     <p>
       The agent status shows <strong>Active</strong>, confirming that the endpoint is connected to the SIEM and ready to forward Sysmon events once they're generated.
@@ -301,7 +300,7 @@
       I downloaded <strong>Sysmon.zip</strong> and extracted it to <code>C:\Users\Administrator\Downloads\Sysmon</code>.
     </p>
 
-    <img src="Sysmon_Extracted.png" alt="Sysmon Files Extracted" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="Sysmon Extracted.png" alt="Sysmon Files Extracted" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
 
     <p>
       The extracted Sysmon package contains:
@@ -341,7 +340,7 @@
       I saved the configuration file as <strong>sysmonconfig-export.xml</strong> and placed it in the Sysmon directory.
     </p>
 
-    <img src="sysmon_config_in_sysmon_folder.png" alt="Sysmon Configuration File" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="sysmon config in sysmon folder.png" alt="Sysmon Configuration File" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
 
     <div class="info-box">
       <strong>Configuration Best Practice:</strong> Never deploy Sysmon without a configuration file. Unconfigured Sysmon generates excessive events that overwhelm SIEM storage and make analysis impossible. In enterprise environments, configurations are customized based on organizational risk profile and SIEM capacity.
@@ -375,7 +374,7 @@
       <li><code>sysmonconfig-export.xml</code> - Apply this configuration file</li>
     </ul>
 
-    <img src="Successfully_installed_sysmon_output.png" alt="Successful Sysmon Installation" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="Successfully installed sysmon output.png" alt="Successful Sysmon Installation" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
 
     <p>
       Installation output confirms successful deployment:
@@ -420,7 +419,7 @@ Sysmon64 started.
       sc query sysmon64
     </div>
 
-    <img src="sysmon_service_running.png" alt="Sysmon Service Running" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="sysmon service running.png" alt="Sysmon Service Running" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
 
     <p>
       Service status output:
@@ -461,7 +460,7 @@ SERVICE_NAME: sysmon64
       Event Viewer → Applications and Services Logs → Microsoft → Windows → Sysmon → Operational
     </div>
 
-    <img src="sysmon_event_ID_1_Details.png" alt="Sysmon Event ID 1 - Process Creation" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="sysmon event ID 1 Details.png" alt="Sysmon Event ID 1 - Process Creation" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
 
     <p>
       The Event Viewer shows multiple Sysmon events, including <strong>Event ID 1 (Process Create)</strong>, which is the most valuable for threat detection.
@@ -550,7 +549,7 @@ SERVICE_NAME: sysmon64
       The Sysmon agent forwarded the PowerShell execution events to the Wazuh SIEM, where they appeared in the Security Events dashboard.
     </p>
 
-    <img src="Powershell_execution_1.png" alt="Wazuh PowerShell Detection - Security Alerts" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="Powershell execution 1.png" alt="Wazuh PowerShell Detection - Security Alerts" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
 
     <p>
       The Wazuh dashboard shows multiple security alerts related to PowerShell activity:
@@ -612,7 +611,7 @@ SERVICE_NAME: sysmon64
       <li><strong>T1546.011</strong> - Event Triggered Execution: Application Shimming</li>
     </ul>
 
-    <img src="Powershell_execution_2.png" alt="Wazuh PowerShell Detection - Detailed Events" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="Powershell execution 2.png" alt="Wazuh PowerShell Detection - Detailed Events" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
 
     <p>
       Additional high-severity alerts detected:
