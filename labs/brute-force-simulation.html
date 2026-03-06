@@ -101,14 +101,14 @@
 <div class="container">
 
   <!-- Sidebar -->
- <div class="sidebar">
-  <h2>Waqas Ibrahim</h2>
-  <a href="../index.html">About Me</a>
-  <a href="home-soc.html">Home SOC Lab</a>
-  <a href="authentication-attacks.html">Authentication Attacks</a>
-  <a href="sysmon-endpoint-detection.html">Sysmon Endpoint Detection</a>
-  <a href="brute-force-simulation.html">Brute Force Attack Simulation</a>
-</div>
+  <div class="sidebar">
+    <h2>Waqas Ibrahim</h2>
+    <a href="../index.html">About Me</a>
+    <a href="home-soc.html">Home SOC Lab</a>
+    <a href="authentication-attacks.html">Authentication Attacks</a>
+    <a href="sysmon-endpoint-detection.html">Sysmon Endpoint Detection</a>
+    <a href="brute-force-simulation.html">Brute Force Attack Simulation</a>
+  </div>
 
   <!-- Main Content -->
   <main class="content">
@@ -248,7 +248,7 @@
     <div class="code-box">
 Username: testuser<br>
 Domain: THREATWATCH<br>
-Full UPN: testuser@threatwatch.local<br>
+Full UPN: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="77031204030204120537031f05121603001603141f591b1814161b">[email&#160;protected]</a><br>
 Purpose: Safe target for brute force simulation
     </div>
 
@@ -279,7 +279,7 @@ Purpose: Safe target for brute force simulation
       I configured the lockout policy through Group Policy Management, which is how enterprise environments deploy these controls across entire domains.
     </p>
 
-    <img src="Screenshot_20260304_151846.png" alt="Account Lockout Policy Configuration" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="Screenshot 2026-03-04 151846.png" alt="Account Lockout Policy Configuration" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
 
     <p>
       The Group Policy Management Editor shows the configured lockout policy:
@@ -316,7 +316,7 @@ Purpose: Safe target for brute force simulation
       After configuring the policy, I forced an immediate update across the domain:
     </p>
 
-    <img src="Screenshot_20260304_151905.png" alt="Group Policy Update Success" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="Screenshot 2026-03-04 151905.png" alt="Group Policy Update Success" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
 
     <div class="code-box">
 C:\Users\Administrator> gpupdate /force
@@ -382,7 +382,7 @@ for i in {1..6}; do smbclient -L //192.168.10.10 -U testuser%WrongPass; done
       <li><code>done</code> - End loop</li>
     </ul>
 
-    <img src="Screenshot_20260304_153214.png" alt="SMB Brute Force Attack from Kali Linux" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="Screenshot 2026-03-04 153214.png" alt="SMB Brute Force Attack from Kali Linux" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
 
     <h3>Attack Results:</h3>
 
@@ -418,7 +418,7 @@ session setup failed: NT_STATUS_ACCOUNT_LOCKED_OUT
       The attack generated multiple security events that were captured by the Wazuh agent on DC01 and forwarded to the centralized SIEM for analysis.
     </p>
 
-    <img src="Screenshot_20260304_153521.png" alt="Wazuh SIEM Detection - Brute Force Alerts" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="Screenshot 2026-03-04 153521.png" alt="Wazuh SIEM Detection - Brute Force Alerts" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
 
     <h3>Security Alerts Generated:</h3>
 
@@ -520,7 +520,7 @@ session setup failed: NT_STATUS_ACCOUNT_LOCKED_OUT
 
     <ul>
       <li><strong>What happened?</strong> Account lockout due to multiple failed authentications</li>
-      <li><strong>Which account?</strong> testuser@threatwatch.local</li>
+      <li><strong>Which account?</strong> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b5c1d0c6c1c0c6d0c7f5c1ddc7d0d4c1c2d4c1d6dd9bd9dad6d4d9">[email&#160;protected]</a></li>
       <li><strong>Which system?</strong> DC01 (Domain Controller) - high-value target</li>
       <li><strong>When?</strong> Mar 4, 2026 @ 15:31:58 UTC</li>
       <li><strong>How many attempts?</strong> 5+ within the same second</li>
@@ -639,7 +639,7 @@ session setup failed: NT_STATUS_ACCOUNT_LOCKED_OUT
       <strong>Escalation Summary for L2:</strong><br><br>
       
       <strong>Incident Type:</strong> Brute Force Attack - Account Lockout<br>
-      <strong>Affected Account:</strong> testuser@threatwatch.local<br>
+      <strong>Affected Account:</strong> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="196d7c6a6d6c6a7c6b596d716b7c786d6e786d7a713775767a7875">[email&#160;protected]</a><br>
       <strong>Affected System:</strong> DC01 (Domain Controller)<br>
       <strong>Attack Vector:</strong> SMB Authentication (Port 445)<br>
       <strong>Timeline:</strong> Mar 4, 2026 @ 15:31:58 UTC<br>
@@ -865,16 +865,4 @@ session setup failed: NT_STATUS_ACCOUNT_LOCKED_OUT
     </p>
 
     <p>
-      If you're a recruiter or hiring manager reading this, know that I didn't wait for someone to hand me a SOC environment to practice in. I built my own. I simulated real attacks. I practiced detection and investigation. I documented everything professionally.
-    </p>
-
-    <p>
-      That's the kind of initiative and passion I'll bring to your SOC team.
-    </p>
-
-  </main>
-
-</div>
-
-</body>
-</html>
+      If you're a
