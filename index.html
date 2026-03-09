@@ -4,8 +4,60 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Waqas Ibrahim | SOC Analyst | Threat Detection & Incident Response</title>
-  <link rel="stylesheet" href="assets/css/style.css">
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+      line-height: 1.6;
+      color: #2d3748;
+    }
+    
+    /* Navigation */
+    nav {
+      background: #1a202c;
+      color: white;
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    nav .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    nav .logo {
+      font-size: 1.5em;
+      font-weight: 700;
+    }
+    
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: 30px;
+    }
+    
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    
+    nav a:hover {
+      color: #667eea;
+    }
     /* Hero Section - Immediate Impact */
     .hero {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -85,6 +137,12 @@
       padding: 0;
     }
     
+    .skill-card li {
+      color: #2d3748;
+      margin-bottom: 8px;
+      font-size: 1em;
+    }
+    
     .skill-card li:before {
       content: "✓ ";
       color: #28a745;
@@ -103,14 +161,16 @@
       text-align: center;
       font-size: 2.5em;
       margin-bottom: 15px;
-      color: #2d3748;
+      color: #1a202c;
+      font-weight: 700;
     }
     
     .projects-section .subtitle {
       text-align: center;
       font-size: 1.2em;
-      color: #718096;
+      color: #4a5568;
       margin-bottom: 50px;
+      font-weight: 500;
     }
     
     .project-grid {
@@ -282,6 +342,19 @@
 </head>
 <body>
 
+  <!-- Navigation -->
+  <nav>
+    <div class="container">
+      <div class="logo">Waqas Ibrahim</div>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="#projects">SOC Labs</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
   <!-- Hero Section -->
   <section class="hero">
     <h1>Waqas Ibrahim</h1>
@@ -436,7 +509,7 @@
   </section>
 
   <!-- About Section -->
-  <section class="about-section">
+  <section class="about-section" id="about">
     <div class="about-content">
       <h2>About Me</h2>
       <p>
@@ -452,8 +525,8 @@
       <div class="credentials">
         <div class="credential-box">
           <h3>🎓 Education</h3>
-          <p><strong>BSc Cyber Security 2021 - 2025</strong></p>
-          <p>De Montfort University</p>
+          <p><strong>BSc Cyber Security</strong></p>
+          <p>De Montfort University 2021 - 2025</p>
           <p>Classification: 2:1 (Upper Second-Class Honours)</p>
         </div>
         
@@ -470,15 +543,10 @@
   </section>
 
   <!-- Contact CTA -->
-  <section class="contact-section">
+  <section class="contact-section" id="contact">
     <h2>Let's Connect</h2>
     <p>Interested in discussing SOC operations, threat detection, or potential opportunities?</p>
     <div class="contact-links">
       <a href="https://linkedin.com/in/waqas-ibrahim00" class="contact-btn">LinkedIn</a>
-      <a href="https://github.com/waqashacks.io" class="contact-btn">GitHub</a>
-      <a href="mailto:ibwaqas@outlook.com" class="contact-btn">Email Me</a>
-    </div>
-  </section>
-
-</body>
-</html>
+      <a href="https://github.com/waqashacks" class="contact-btn">GitHub</a>
+      <a href="/cdn-cgi/l/ibwaqas@outlook.com" class="contact-btn">Email Me<
