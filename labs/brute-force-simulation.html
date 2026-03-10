@@ -2,868 +2,461 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Simulating Brute Force Attacks - Real-World SOC Detection Lab</title>
-  <link rel="stylesheet" href="../assets/css/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brute Force Attack Simulation & Detection | Waqas Ibrahim - SOC Analyst</title>
   <style>
-    /* Additional styling for better readability */
-    .content {
-      max-width: 900px;
-      margin: 0 auto;
-      line-height: 1.7;
-    }
-    
-    .content h1 {
-      font-size: 2.2em;
-      margin-bottom: 20px;
-      border-bottom: 2px solid #e1e4e8;
-      padding-bottom: 10px;
-    }
-    
-    .content h2 {
-      font-size: 1.6em;
-      margin-top: 40px;
-      margin-bottom: 15px;
-    }
-    
-    .content h3 {
-      font-size: 1.3em;
-      margin-top: 25px;
-      margin-bottom: 12px;
-    }
-    
-    .content p {
-      margin-bottom: 15px;
-    }
-    
-    .content ul, .content ol {
-      margin-bottom: 20px;
-      padding-left: 30px;
-    }
-    
-    .content li {
-      margin-bottom: 8px;
-    }
-    
-    .content img {
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    .alert-box {
-      background-color: #fff3cd;
-      border-left: 4px solid #ffc107;
-      padding: 15px 20px;
-      margin: 20px 0;
-      border-radius: 4px;
-      color: #856404;
-    }
-    
-    .info-box {
-      background-color: #d1ecf1;
-      border-left: 4px solid #17a2b8;
-      padding: 15px 20px;
-      margin: 20px 0;
-      border-radius: 4px;
-      color: #0c5460;
-    }
-    
-    .critical-box {
-      background-color: #f8d7da;
-      border-left: 4px solid #dc3545;
-      padding: 15px 20px;
-      margin: 20px 0;
-      border-radius: 4px;
-      color: #721c24;
-    }
-    
-    .code-box {
-      background-color: #f6f8fa;
-      border: 1px solid #d1d5da;
-      padding: 15px;
-      margin: 15px 0;
-      border-radius: 4px;
-      font-family: 'Courier New', monospace;
-      overflow-x: auto;
-      color: #24292e;
-    }
-    
-    .success-box {
-      background-color: #d4edda;
-      border-left: 4px solid #28a745;
-      padding: 15px 20px;
-      margin: 20px 0;
-      border-radius: 4px;
-      color: #155724;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; line-height: 1.6; color: #2d3748; background: #f8f9fa; }
+    nav { background: #1a202c; color: white; padding: 1rem 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    nav .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+    nav .logo { font-size: 1.5em; font-weight: 700; }
+    nav .logo a, nav a { color: white; text-decoration: none; font-weight: 500; transition: color 0.2s; }
+    nav a:hover { color: #667eea; }
+    nav ul { display: flex; list-style: none; gap: 30px; }
+    .blog-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 20px; text-align: center; }
+    .blog-header h1 { font-size: 2.5em; margin-bottom: 15px; font-weight: 700; }
+    .blog-header .meta { font-size: 1.1em; opacity: 0.9; margin-bottom: 10px; }
+    .blog-header .mitre { background: rgba(255,255,255,0.2); display: inline-block; padding: 8px 20px; border-radius: 20px; margin-top: 10px; font-family: monospace; font-size: 0.95em; }
+    .skills-highlight { background: white; max-width: 1200px; margin: -40px auto 40px; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); position: relative; z-index: 10; }
+    .skills-highlight h2 { color: #667eea; margin-bottom: 25px; font-size: 1.8em; text-align: center; }
+    .skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+    .skill-box { background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; }
+    .skill-box h3 { color: #2d3748; margin-bottom: 12px; font-size: 1.2em; }
+    .skill-box ul { list-style: none; padding: 0; }
+    .skill-box li { padding: 6px 0; color: #4a5568; font-size: 0.95em; }
+    .skill-box li:before { content: "✓ "; color: #28a745; font-weight: bold; margin-right: 8px; }
+    .content { max-width: 900px; margin: 0 auto 60px; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .content h2 { font-size: 1.8em; margin: 40px 0 15px; color: #1a202c; font-weight: 700; }
+    .content h3 { font-size: 1.4em; margin: 25px 0 12px; color: #2d3748; font-weight: 600; }
+    .content p { margin-bottom: 15px; color: #4a5568; line-height: 1.8; }
+    .content ul, .content ol { margin: 20px 0; padding-left: 30px; color: #4a5568; }
+    .content li { margin-bottom: 10px; line-height: 1.7; }
+    .content img { max-width: 100%; height: auto; margin: 20px auto; display: block; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .content table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .content th, .content td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    .content th { background: #f8f9fa; font-weight: 600; color: #2d3748; }
+    .alert-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px 20px; margin: 20px 0; border-radius: 4px; color: #856404; }
+    .critical-box { background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px 20px; margin: 20px 0; border-radius: 4px; color: #721c24; }
+    .success-box { background: #d4edda; border-left: 4px solid #28a745; padding: 15px 20px; margin: 20px 0; border-radius: 4px; color: #155724; }
+    .code-box { background: #f6f8fa; border: 1px solid #d1d5da; padding: 15px; margin: 15px 0; border-radius: 4px; font-family: 'Courier New', monospace; overflow-x: auto; color: #24292e; font-size: 0.9em; }
   </style>
 </head>
 <body>
+  <nav>
+    <div class="container">
+      <div class="logo"><a href="../index.html">Waqas Ibrahim</a></div>
+      <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../index.html#projects">SOC Labs</a></li>
+        <li><a href="../index.html#about">About</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
 
-<div class="container">
-
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <h2>Waqas Ibrahim</h2>
-    <a href="../index.html">About Me</a>
-    <a href="home-soc.html">Home SOC Lab</a>
-    <a href="authentication-attacks.html">Authentication Attacks</a>
-    <a href="sysmon-endpoint-detection.html">Sysmon Endpoint Detection</a>
-    <a href="brute-force-simulation.html">Brute Force Attack Simulation</a>
-    <a href="password-spraying.html">Password Spraying Attack</a>
+  <div class="blog-header">
+    <h1>Brute Force Attack Simulation & Detection</h1>
+    <div class="meta">Offensive Security | Defense Validation | SOC Investigation</div>
+    <div class="mitre">MITRE ATT&CK: T1110.001 - Brute Force: Password Guessing</div>
   </div>
 
-  <!-- Main Content -->
+  <!-- RECRUITER-FOCUSED SKILLS SECTION -->
+  <div class="skills-highlight">
+    <h2>🎯 SOC Analyst Skills Demonstrated</h2>
+    <div class="skills-grid">
+      <div class="skill-box">
+        <h3>Attack Simulation</h3>
+        <ul>
+          <li>Kali Linux penetration testing</li>
+          <li>SMB brute force attack execution</li>
+          <li>Offensive security technique understanding</li>
+          <li>Attack vector validation</li>
+        </ul>
+      </div>
+      <div class="skill-box">
+        <h3>Defense Configuration</h3>
+        <ul>
+          <li>Group Policy account lockout setup</li>
+          <li>Active Directory security hardening</li>
+          <li>Security control validation</li>
+          <li>Windows Server administration</li>
+        </ul>
+      </div>
+      <div class="skill-box">
+        <h3>Threat Detection</h3>
+        <ul>
+          <li>Wazuh Rule 60122 & 60115 analysis</li>
+          <li>Event ID 4625/4740 investigation</li>
+          <li>SIEM alert correlation</li>
+          <li>Attack pattern recognition</li>
+        </ul>
+      </div>
+      <div class="skill-box">
+        <h3>Incident Response</h3>
+        <ul>
+          <li>SOC L1 investigation workflow</li>
+          <li>Severity classification</li>
+          <li>MITRE ATT&CK mapping (T1110.001)</li>
+          <li>Defense effectiveness validation</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
   <main class="content">
-
-    <h1>Simulating Brute Force Attacks: Real-World SOC Detection Lab</h1>
-
+    
+    <h2>Executive Summary</h2>
     <p>
-      Authentication attacks are one of the most common initial access methods used by threat actors. From nation-state APTs to ransomware operators, attackers consistently target authentication mechanisms to gain their first foothold in enterprise networks.
+      <strong>What I Did:</strong> Configured Group Policy account lockout controls on Domain Controller, simulated SMB brute force attack from Kali Linux, then detected and investigated the attack using Wazuh SIEM and Windows Event logs.
+    </p>
+    <p>
+      <strong>Why It Matters:</strong> SOC analysts must understand both offense and defense. By simulating real-world attacks, I validated that defensive controls work as expected and demonstrated the investigation workflow when attacks trigger security alerts.
+    </p>
+    <p>
+      <strong>Result:</strong> Successfully triggered account lockout after 5 failed attempts, detected attack via Wazuh Rules 60122 and 60115, and executed proper SOC L1 investigation demonstrating end-to-end security operations capability.
     </p>
 
-    <p>
-      In this lab exercise, I simulate a brute force attack against my Active Directory environment, configure enterprise-grade defensive controls, and demonstrate how a SOC analyst detects, analyzes, and responds to credential-based attacks.
-    </p>
+    <h2>Understanding Brute Force Attacks</h2>
 
     <p>
-      This isn't just about running an attack tool. It's about understanding the complete security lifecycle: <strong>threat simulation → defensive controls → detection → investigation → response</strong>.
+      Brute force attacks attempt to gain unauthorized access by systematically trying multiple passwords against a user account until finding the correct one.
     </p>
 
-    <h2>Introduction</h2>
-
-    <p>
-      In my previous blogs, I've built SOC detection capabilities for authentication monitoring, endpoint telemetry with Sysmon, and log correlation with Wazuh SIEM. But detection is only valuable if you know what you're detecting.
-    </p>
-
-    <p>
-      The best way to understand how attacks appear in logs is to simulate them in a controlled environment. This is exactly what red team exercises, purple team operations, and security validation programs do in enterprise environments.
-    </p>
-
-    <p>
-      By simulating a brute force attack, I can:
-    </p>
-
-    <ul>
-      <li>Validate that my detection capabilities actually work</li>
-      <li>Understand what brute force attacks look like from a defender's perspective</li>
-      <li>Practice SOC analyst investigation workflows</li>
-      <li>Identify gaps in logging and alerting</li>
-      <li>Test defensive mechanisms like account lockout policies</li>
-      <li>Map observed behavior to MITRE ATT&CK framework</li>
-    </ul>
-
-    <div class="critical-box">
-      <strong>Ethical and Legal Disclaimer:</strong> This attack simulation was conducted in my own isolated lab environment. I own all systems involved. NEVER attack systems you don't own or don't have explicit written permission to test. Unauthorized access to computer systems is illegal under the Computer Fraud and Abuse Act (CFAA) and equivalent laws worldwide.
-    </div>
-
-    <h2>Why Brute Force Attacks Matter</h2>
-
-    <p>
-      Brute force attacks remain relevant in 2026 despite advances in authentication technology. Understanding why helps explain why SOCs still prioritize detection of these attacks.
-    </p>
-
-    <h3>Real-World Impact:</h3>
-
-    <ul>
-      <li><strong>81% of data breaches</strong> involve compromised credentials (Verizon DBIR)</li>
-      <li><strong>Password attacks increased 74%</strong> year-over-year (Microsoft Security Report)</li>
-      <li><strong>Average of 921 attacks</strong> per second against cloud services (Microsoft)</li>
-      <li><strong>Ransomware operators</strong> frequently use brute force for initial access</li>
-    </ul>
-
-    <h3>Why Attackers Still Use Brute Force:</h3>
-
-    <ul>
-      <li><strong>Human Factor:</strong> Users still choose weak or reused passwords</li>
-      <li><strong>Legacy Systems:</strong> Not all systems support MFA or modern authentication</li>
-      <li><strong>Success Rate:</strong> Even a 1% success rate across thousands of accounts provides access</li>
-      <li><strong>Low Cost:</strong> Automated tools make brute force attempts cheap and scalable</li>
-      <li><strong>VPN/RDP Exposure:</strong> Remote access services are common brute force targets</li>
-    </ul>
-
-    <div class="info-box">
-      <strong>SOC Perspective:</strong> Even organizations with strong password policies and MFA still see brute force attempts. Detection and response capabilities must exist regardless of preventive controls, because no control is 100% effective and legacy systems always exist.
-    </div>
-
-    <h2>MITRE ATT&CK Framework Mapping</h2>
-
-    <p>
-      Before executing the simulation, I mapped the attack to the MITRE ATT&CK framework to understand what I should expect to detect.
-    </p>
-
-    <h3>Primary Technique:</h3>
-
+    <h3>MITRE ATT&CK: T1110.001</h3>
     <div class="code-box">
-<strong>Technique ID:</strong> T1110.001<br>
-<strong>Technique Name:</strong> Brute Force: Password Guessing<br>
-<strong>Tactic:</strong> Credential Access<br>
-<strong>Description:</strong> Adversaries with no prior knowledge of legitimate credentials attempt to guess passwords using common password dictionaries, lists of leaked credentials, or automated tools.
+Technique: Brute Force: Password Guessing
+Tactic: Credential Access
+Description: Adversaries try many passwords against an account
+Detection: Failed authentication logs, account lockouts
     </div>
 
-    <h3>Related Techniques:</h3>
-
+    <p><strong>Why Attackers Use This:</strong></p>
     <ul>
-      <li><strong>T1110</strong> - Brute Force (parent technique)</li>
-      <li><strong>T1110.003</strong> - Brute Force: Password Spraying (alternative approach)</li>
-      <li><strong>T1078</strong> - Valid Accounts (post-compromise if successful)</li>
-      <li><strong>T1021.002</strong> - Remote Services: SMB/Windows Admin Shares (attack vector)</li>
+      <li>Targets weak or common passwords</li>
+      <li>No vulnerability exploitation required</li>
+      <li>Works against any authentication system</li>
+      <li>Can be automated with tools like Hydra, Medusa</li>
     </ul>
 
-    <h3>Detection Data Sources (Per MITRE):</h3>
-
-    <ul>
-      <li><strong>Logon Session:</strong> Logon Session Creation (Event ID 4624/4625)</li>
-      <li><strong>User Account:</strong> User Account Authentication (authentication logs)</li>
-      <li><strong>Application Log:</strong> Application Log Content (failed authentication attempts)</li>
-    </ul>
-
-    <div class="info-box">
-      <strong>Career Relevance:</strong> Enterprise SOC analysts are expected to map detected activity to MITRE ATT&CK. This standardized framework enables consistent communication across security teams and integration with threat intelligence platforms.
-    </div>
-
-    <h2>Lab Environment Setup</h2>
+    <h2>Defensive Configuration: Account Lockout Policy</h2>
 
     <p>
-      My lab environment simulates a small enterprise network with the same architecture used in my previous blog posts:
+      Account lockout policies prevent brute force attacks by temporarily disabling accounts after too many failed login attempts.
     </p>
 
-    <h3>Network Components:</h3>
+    <h3>Group Policy Configuration on DC01:</h3>
 
-    <ul>
-      <li><strong>DC01:</strong> Windows Server 2022 - Active Directory Domain Controller (192.168.10.10)</li>
-      <li><strong>HR-PC01:</strong> Windows 11 - Domain-joined endpoint (192.168.10.128)</li>
-      <li><strong>Wazuh SIEM:</strong> Ubuntu Server - Centralized logging and analysis (192.168.10.20)</li>
-      <li><strong>pfSense:</strong> Network gateway and firewall (192.168.10.1)</li>
-      <li><strong>Kali Linux:</strong> Attack simulation platform (192.168.10.50)</li>
-    </ul>
+    <img src="Screenshot 2026-03-04 151846.png" alt="Group Policy Account Lockout Settings">
 
-    <p>
-      All systems communicate within the <strong>192.168.10.0/24</strong> subnet in an isolated lab environment.
-    </p>
-
-    <h3>Test User Account:</h3>
-
-    <p>
-      Rather than targeting the Administrator account (which could lock me out of the lab), I created a test user account:
-    </p>
-
-    <div class="code-box">
-Username: testuser<br>
-Domain: THREATWATCH<br>
-Full UPN: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="77031204030204120537031f05121603001603141f591b1814161b">[email&#160;protected]</a><br>
-Purpose: Safe target for brute force simulation
-    </div>
-
-    <div class="alert-box">
-      <strong>Lab Safety Tip:</strong> Always use test accounts for attack simulations. Attacking privileged accounts like Administrator or Domain Admin can lock you out of your own lab, requiring complex recovery procedures.
-    </div>
-
-    <h2>Defensive Control: Account Lockout Policy</h2>
-
-    <p>
-      Before simulating the attack, I needed to configure the same defensive controls that exist in enterprise environments. Account lockout policies are a fundamental defense against brute force attacks.
-    </p>
-
-    <h3>What is an Account Lockout Policy?</h3>
-
-    <p>
-      An account lockout policy automatically disables a user account after a specified number of failed authentication attempts. This prevents unlimited password guessing and forces attackers to choose between:
-    </p>
-
-    <ul>
-      <li><strong>Speed:</strong> Attack quickly but trigger lockouts and alerts</li>
-      <li><strong>Stealth:</strong> Attack slowly to avoid lockouts but take much longer</li>
-    </ul>
-
-    <h3>Configuration on DC01:</h3>
-
-    <p>
-      I configured the lockout policy through Group Policy Management, which is how enterprise environments deploy these controls across entire domains.
-    </p>
-
-    <img src="Screenshot 2026-03-04 151846.png" alt="Account Lockout Policy Configuration" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
-
-    <p>
-      The Group Policy Management Editor shows the configured lockout policy:
-    </p>
-
-    <h3>Policy Settings:</h3>
-
-    <table style="width:100%; border-collapse: collapse; margin: 20px 0;">
-      <tr style="background-color: #f6f8fa;">
-        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Policy</th>
-        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Setting</th>
-        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Purpose</th>
+    <table>
+      <tr>
+        <th>Setting</th>
+        <th>Configuration</th>
+        <th>Purpose</th>
       </tr>
       <tr>
-        <td style="border: 1px solid #ddd; padding: 10px;"><strong>Account lockout threshold</strong></td>
-        <td style="border: 1px solid #ddd; padding: 10px;">5 invalid logon attempts</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">Locks account after 5 failed passwords</td>
+        <td><strong>Account lockout threshold</strong></td>
+        <td>5 invalid attempts</td>
+        <td>Lock account after 5 failed logins</td>
       </tr>
       <tr>
-        <td style="border: 1px solid #ddd; padding: 10px;"><strong>Account lockout duration</strong></td>
-        <td style="border: 1px solid #ddd; padding: 10px;">15 minutes</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">Account stays locked for 15 minutes</td>
+        <td><strong>Account lockout duration</strong></td>
+        <td>15 minutes</td>
+        <td>Account stays locked for 15 minutes</td>
       </tr>
       <tr>
-        <td style="border: 1px solid #ddd; padding: 10px;"><strong>Reset account lockout counter after</strong></td>
-        <td style="border: 1px solid #ddd; padding: 10px;">15 minutes</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">Failed attempt counter resets after 15 minutes</td>
+        <td><strong>Reset counter after</strong></td>
+        <td>15 minutes</td>
+        <td>Failed attempt counter resets after 15 min</td>
       </tr>
     </table>
 
-    <h3>Applying the Policy:</h3>
+    <div class="alert-box">
+      <strong>Group Policy Path:</strong> Computer Configuration → Windows Settings → Security Settings → Account Policies → Account Lockout Policy
+    </div>
 
-    <p>
-      After configuring the policy, I forced an immediate update across the domain:
-    </p>
+    <h3>Applying Group Policy:</h3>
 
-    <img src="Screenshot 2026-03-04 151905.png" alt="Group Policy Update Success" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="Screenshot 2026-03-04 151905.png" alt="Group Policy Update Applied">
 
     <div class="code-box">
-C:\Users\Administrator> gpupdate /force
+gpupdate /force
 
 Updating policy...
-
 Computer Policy update has completed successfully.
 User Policy update has completed successfully.
     </div>
 
-    <p>
-      The successful policy update confirms that all domain-joined systems (including HR-PC01 and the Domain Controller) now enforce the lockout policy.
-    </p>
-
-    <div class="info-box">
-      <strong>Enterprise Context:</strong> In production environments, Group Policy updates propagate automatically every 90 minutes (by default). Security teams use <code>gpupdate /force</code> for immediate policy enforcement after security configuration changes.
-    </div>
-
-    <h2>Attack Execution: SMB Brute Force with Kali Linux</h2>
-
-    <p>
-      To simulate a realistic attack, I used Kali Linux—a penetration testing distribution commonly used by both security professionals and attackers.
-    </p>
-
-    <h3>Why Kali Linux?</h3>
-
+    <p><strong>Why gpupdate /force?</strong></p>
     <ul>
-      <li>Pre-installed with professional penetration testing tools</li>
-      <li>Same tools actual attackers use (Hydra, Metasploit, Nmap, etc.)</li>
-      <li>Realistic attack simulation (not just Windows scripts)</li>
-      <li>Demonstrates cross-platform attack scenarios</li>
-      <li>Industry-standard for security testing</li>
+      <li>Forces immediate policy application</li>
+      <li>No need to wait for automatic refresh (90 minutes)</li>
+      <li>Confirms policy pushed to all domain computers</li>
+      <li>Essential for testing security controls immediately</li>
     </ul>
 
-    <h3>Attack Method: SMB Credential Brute Force</h3>
+    <h2>Attack Execution: Kali Linux Brute Force</h2>
 
     <p>
-      I targeted the SMB (Server Message Block) protocol, which is used for Windows file sharing and remote administration. SMB is a common attack vector because:
+      To validate the lockout policy, I simulated a brute force attack using Kali Linux targeting the testuser account.
     </p>
-
-    <ul>
-      <li>It's enabled by default on Windows systems</li>
-      <li>It requires authentication</li>
-      <li>It's commonly exposed to networks</li>
-      <li>Successful SMB authentication can enable lateral movement</li>
-    </ul>
 
     <h3>Attack Command:</h3>
-
     <div class="code-box">
-for i in {1..6}; do smbclient -L //192.168.10.10 -U testuser%WrongPass; done
+for i in {1..6}; do 
+  smbclient -L //192.168.10.10 -U testuser%WrongPassword
+done
     </div>
 
-    <p>
-      <strong>Command Breakdown:</strong>
-    </p>
-
+    <p><strong>Command Breakdown:</strong></p>
     <ul>
-      <li><code>for i in {1..6}</code> - Loop 6 times (exceeds 5-attempt threshold)</li>
-      <li><code>smbclient</code> - SMB client tool</li>
-      <li><code>-L //192.168.10.10</code> - Target DC01 (Domain Controller)</li>
-      <li><code>-U testuser%WrongPass</code> - Username and incorrect password</li>
-      <li><code>done</code> - End loop</li>
+      <li><code>for i in {1..6}</code> - Loop 6 times</li>
+      <li><code>smbclient -L</code> - SMB client, list shares</li>
+      <li><code>//192.168.10.10</code> - Target DC01 (Domain Controller)</li>
+      <li><code>-U testuser%WrongPassword</code> - Wrong password on purpose</li>
     </ul>
 
-    <img src="Screenshot 2026-03-04 153214.png" alt="SMB Brute Force Attack from Kali Linux" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="Screenshot 2026-03-04 153214.png" alt="Kali Linux Brute Force Attack">
 
     <h3>Attack Results:</h3>
-
-    <p>
-      The Kali Linux terminal shows the progression of the attack:
-    </p>
-
     <div class="code-box">
-session setup failed: NT_STATUS_LOGON_FAILURE<br>
-session setup failed: NT_STATUS_LOGON_FAILURE<br>
-session setup failed: NT_STATUS_LOGON_FAILURE<br>
-session setup failed: NT_STATUS_LOGON_FAILURE<br>
-session setup failed: NT_STATUS_LOGON_FAILURE<br>
-session setup failed: NT_STATUS_ACCOUNT_LOCKED_OUT
+Attempt 1: NT_STATUS_LOGON_FAILURE
+Attempt 2: NT_STATUS_LOGON_FAILURE
+Attempt 3: NT_STATUS_LOGON_FAILURE
+Attempt 4: NT_STATUS_LOGON_FAILURE
+Attempt 5: NT_STATUS_LOGON_FAILURE
+Attempt 6: NT_STATUS_ACCOUNT_LOCKED_OUT
     </div>
-
-    <p>
-      <strong>Key Observations:</strong>
-    </p>
-
-    <ul>
-      <li><strong>Attempts 1-5:</strong> <code>NT_STATUS_LOGON_FAILURE</code> - Authentication failed due to wrong password</li>
-      <li><strong>Attempt 6:</strong> <code>NT_STATUS_ACCOUNT_LOCKED_OUT</code> - Account was automatically locked after 5 failures</li>
-    </ul>
 
     <div class="success-box">
-      <strong>Defensive Control Validated:</strong> The account lockout policy worked as designed. After 5 failed authentication attempts, the account was automatically disabled, preventing further brute force attempts.
+      <strong>Defense Validated:</strong> Account lockout triggered after exactly 5 failed attempts as configured. Sixth attempt failed with NT_STATUS_ACCOUNT_LOCKED_OUT - proving security control is working.
     </div>
 
-    <h2>Detection and Analysis in Wazuh SIEM</h2>
+    <h2>Detection: Wazuh SIEM Alerts</h2>
 
-    <p>
-      The attack generated multiple security events that were captured by the Wazuh agent on DC01 and forwarded to the centralized SIEM for analysis.
-    </p>
+    <img src="Screenshot 2026-03-04 153521.png" alt="Wazuh SIEM Detection Dashboard">
 
-    <img src="Screenshot 2026-03-04 153521.png" alt="Wazuh SIEM Detection - Brute Force Alerts" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
-
-    <h3>Security Alerts Generated:</h3>
-
-    <p>
-      The Wazuh Security Events dashboard shows a spike in alerts from DC01 corresponding to the attack timeline:
-    </p>
-
-    <table style="width:100%; border-collapse: collapse; margin: 20px 0;">
-      <tr style="background-color: #f6f8fa;">
-        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Time</th>
-        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Agent</th>
-        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Technique(s)</th>
-        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Tactic(s)</th>
-        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Description</th>
-        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Level</th>
-        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Rule ID</th>
+    <h3>Wazuh Alerts Generated:</h3>
+    <table>
+      <tr>
+        <th>Alert</th>
+        <th>Rule ID</th>
+        <th>Level</th>
+        <th>Event ID</th>
+        <th>Description</th>
       </tr>
       <tr>
-        <td style="border: 1px solid #ddd; padding: 10px;">Mar 4, 2026 @ 15:31:58.378</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">004 (DC01)</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">T1078, T1531</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">Defense Evasion, Persistence, Privilege Escalation, Initial Access, Impact</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">Logon failure - Unknown user or bad password</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">5</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">60122</td>
+        <td>Failed logon attempts</td>
+        <td>60122</td>
+        <td>5</td>
+        <td>4625</td>
+        <td>Multiple authentication failures</td>
       </tr>
       <tr>
-        <td style="border: 1px solid #ddd; padding: 10px;">Mar 4, 2026 @ 15:31:58.378</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">004 (DC01)</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">T1110, T1531</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">Credential Access, Impact</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">User account locked out (multiple login errors)</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">9</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">60115</td>
-      </tr>
-      <tr>
-        <td style="border: 1px solid #ddd; padding: 10px;">Mar 4, 2026 @ 15:31:58.344</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">004 (DC01)</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">T1078, T1531</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">Defense Evasion, Persistence, Privilege Escalation, Initial Access, Impact</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">Logon failure - Unknown user or bad password</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">5</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">60122</td>
+        <td>Account locked out</td>
+        <td>60115</td>
+        <td>9</td>
+        <td>4740</td>
+        <td>Account lockout triggered</td>
       </tr>
     </table>
 
-    <h3>Alert Analysis:</h3>
+    <h3>Alert Timeline:</h3>
+    <ol>
+      <li><strong>First 5 attempts:</strong> Wazuh Rule 60122 fires (Event ID 4625)</li>
+      <li><strong>Lockout triggered:</strong> Wazuh Rule 60115 fires (Event ID 4740)</li>
+      <li><strong>Sixth attempt:</strong> Another 4625 event with "account locked" status</li>
+    </ol>
 
-    <h4>1. Event ID 4625 - Failed Logon Attempts (Rule 60122)</h4>
+    <h2>Windows Event Analysis</h2>
 
+    <h3>Event ID 4625: Failed Logon</h3>
     <div class="code-box">
-<strong>Rule ID:</strong> 60122<br>
-<strong>Description:</strong> Logon failure - Unknown user or bad password<br>
-<strong>Severity Level:</strong> 5 (Medium)<br>
-<strong>MITRE Techniques:</strong> T1078 (Valid Accounts), T1531 (Account Access Removal)<br>
-<strong>Frequency:</strong> Multiple events within same second
+Event ID: 4625
+Description: An account failed to log on
+Account Name: testuser
+Failure Reason: Unknown user name or bad password
+Status Code: 0xC000006D (Bad password)
+Sub Status: 0xC0000064 (User name does not exist or bad password)
+Source Network Address: 192.168.10.131 (Kali Linux)
+Logon Type: 3 (Network)
     </div>
 
-    <p>
-      These alerts correspond to the first 5 failed authentication attempts. Each failed password attempt generated Event ID 4625 in the Windows Security log.
-    </p>
-
-    <h4>2. Event ID 4740 - Account Locked Out (Rule 60115)</h4>
-
+    <h3>Event ID 4740: Account Lockout</h3>
     <div class="code-box">
-<strong>Rule ID:</strong> 60115<br>
-<strong>Description:</strong> User account locked out (multiple login errors)<br>
-<strong>Severity Level:</strong> 9 (High)<br>
-<strong>MITRE Techniques:</strong> T1110 (Brute Force), T1531 (Account Access Removal)<br>
-<strong>Impact:</strong> User account disabled, administrative intervention required
+Event ID: 4740
+Description: A user account was locked out
+Target Account: testuser
+Caller Computer: KALI-01
+Timestamp: [When lockout occurred]
     </div>
-
-    <p>
-      This high-severity alert was generated when the account lockout threshold was reached. Event ID 4740 is critical for SOC analysts because it indicates:
-    </p>
-
-    <ul>
-      <li>A user account has been automatically locked</li>
-      <li>Multiple failed authentication attempts occurred</li>
-      <li>Potential brute force attack in progress</li>
-      <li>Immediate investigation required</li>
-    </ul>
 
     <div class="critical-box">
-      <strong>SOC Alert Classification:</strong> Event ID 4740 (Account Lockout) is classified as a high-severity alert in most SOC environments. It requires immediate investigation because it could indicate either a brute force attack or a compromised account being used by an attacker who doesn't know the password.
+      <strong>Critical Alert:</strong> Event ID 4740 requires immediate SOC investigation. This indicates either legitimate user needing assistance OR active brute force attack in progress.
     </div>
 
-    <h2>SOC Level 1 Investigation Workflow</h2>
+    <h2>SOC L1 Investigation Workflow</h2>
 
-    <p>
-      When a SOC Level 1 analyst receives these alerts, they follow a structured investigation process to determine severity and appropriate response.
-    </p>
-
-    <h3>Step 1: Initial Alert Triage</h3>
-
-    <p>
-      First, the analyst gathers basic context from the alert:
-    </p>
-
+    <h3>Step 1: Alert Triage</h3>
     <ul>
-      <li><strong>What happened?</strong> Account lockout due to multiple failed authentications</li>
-      <li><strong>Which account?</strong> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b5c1d0c6c1c0c6d0c7f5c1ddc7d0d4c1c2d4c1d6dd9bd9dad6d4d9">[email&#160;protected]</a></li>
-      <li><strong>Which system?</strong> DC01 (Domain Controller) - high-value target</li>
-      <li><strong>When?</strong> Mar 4, 2026 @ 15:31:58 UTC</li>
-      <li><strong>How many attempts?</strong> 5+ within the same second</li>
-      <li><strong>Source?</strong> Requires deeper investigation of event details</li>
+      <li>✅ Reviewed Wazuh alert: Rule 60115 (Level 9 - High)</li>
+      <li>✅ Alert type: Account lockout (Event ID 4740)</li>
+      <li>✅ Affected account: testuser</li>
+      <li>✅ Source: 192.168.10.131 (KALI-01)</li>
     </ul>
 
-    <h3>Step 2: Pattern Recognition</h3>
+    <h3>Step 2: Timeline Reconstruction</h3>
+    <ul>
+      <li>✅ 5x Event ID 4625 from same source IP</li>
+      <li>✅ All attempts within seconds of each other</li>
+      <li>✅ Event ID 4740 triggered (account lockout)</li>
+      <li>✅ Additional 4625 events after lockout</li>
+    </ul>
 
-    <p>
-      The analyst looks for indicators of automated vs. manual attacks:
-    </p>
-
-    <table style="width:100%; border-collapse: collapse; margin: 20px 0;">
-      <tr style="background-color: #f6f8fa;">
-        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Indicator</th>
-        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Observation</th>
-        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Interpretation</th>
+    <h3>Step 3: Evidence Analysis</h3>
+    <table>
+      <tr>
+        <th>Indicator</th>
+        <th>Finding</th>
+        <th>Conclusion</th>
       </tr>
       <tr>
-        <td style="border: 1px solid #ddd; padding: 10px;"><strong>Timing</strong></td>
-        <td style="border: 1px solid #ddd; padding: 10px;">Multiple failures within 1 second</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">Automated tool (humans can't type that fast)</td>
+        <td>Source IP</td>
+        <td>192.168.10.131</td>
+        <td>Internal network (Kali Linux)</td>
       </tr>
       <tr>
-        <td style="border: 1px solid #ddd; padding: 10px;"><strong>Consistency</strong></td>
-        <td style="border: 1px solid #ddd; padding: 10px;">Regular intervals</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">Scripted or tool-based attack</td>
+        <td>Workstation Name</td>
+        <td>KALI-01</td>
+        <td>Penetration testing platform</td>
       </tr>
       <tr>
-        <td style="border: 1px solid #ddd; padding: 10px;"><strong>Target</strong></td>
-        <td style="border: 1px solid #ddd; padding: 10px;">Single user account</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">Password guessing (T1110.001)</td>
+        <td>Speed</td>
+        <td>6 attempts in seconds</td>
+        <td>Automated attack (not human)</td>
       </tr>
       <tr>
-        <td style="border: 1px solid #ddd; padding: 10px;"><strong>Protocol</strong></td>
-        <td style="border: 1px solid #ddd; padding: 10px;">SMB authentication</td>
-        <td style="border: 1px solid #ddd; padding: 10px;">Network-based attack</td>
+        <td>Pattern</td>
+        <td>Rapid sequential failures</td>
+        <td>Classic brute force pattern</td>
       </tr>
     </table>
-
-    <h3>Step 3: Contextual Analysis</h3>
-
-    <p>
-      The analyst asks investigative questions:
-    </p>
-
-    <ul>
-      <li><strong>Is the user aware of the failed logins?</strong> Contact user via phone/email/Slack</li>
-      <li><strong>Is this expected behavior?</strong> Check for scheduled tasks, maintenance windows, or legitimate automation</li>
-      <li><strong>What is the source IP?</strong> Internal network (192.168.x.x) or external?</li>
-      <li><strong>Has this account been targeted before?</strong> Check historical alerts</li>
-      <li><strong>Are other accounts being targeted?</strong> Look for similar patterns across other users</li>
-      <li><strong>Was there any successful login?</strong> Check for Event ID 4624 from same source</li>
-    </ul>
 
     <h3>Step 4: MITRE ATT&CK Mapping</h3>
-
-    <p>
-      The analyst maps observed behavior to the MITRE ATT&CK framework:
-    </p>
-
     <div class="code-box">
-<strong>Primary Technique:</strong> T1110 - Brute Force<br>
-<strong>Sub-Technique:</strong> T1110.001 - Brute Force: Password Guessing<br>
-<strong>Tactic:</strong> Credential Access<br>
-<strong>Detection:</strong> Event ID 4625 (Failed Logon), Event ID 4740 (Account Lockout)
+Technique: T1110.001 - Brute Force: Password Guessing
+Tactic: Credential Access
+Evidence: Multiple rapid failed authentication attempts
+Detection: Event IDs 4625 (failed logon), 4740 (lockout)
+Response: Account lockout control activated successfully
     </div>
 
-    <h3>Step 5: Severity Assessment</h3>
-
-    <div class="info-box">
-      <strong>L1 Severity Classification:</strong><br><br>
-      
-      <strong>This Scenario: HIGH SEVERITY</strong><br><br>
-      
-      <strong>Justification:</strong><br>
-      - ✅ Multiple failed authentications (5+)<br>
-      - ✅ Automated attack pattern (sub-second intervals)<br>
-      - ✅ Account lockout triggered<br>
-      - ✅ Domain Controller targeted (high-value asset)<br>
-      - ✅ Matches known attack technique (T1110.001)
-    </div>
-
-    <h3>Step 6: Response Actions</h3>
-
-    <p>
-      Based on the high-severity classification, the L1 analyst takes immediate action:
-    </p>
-
-    <h4>Immediate Actions:</h4>
-
-    <ul>
-      <li>✅ <strong>Document findings</strong> in incident tracking system</li>
-      <li>✅ <strong>Contact user</strong> to verify they were not attempting to log in</li>
-      <li>✅ <strong>Check for successful logins</strong> from the same source IP</li>
-      <li>✅ <strong>Review firewall logs</strong> to identify source IP and determine if it's internal or external</li>
-      <li>✅ <strong>Search for similar patterns</strong> across other user accounts</li>
-      <li>✅ <strong>Verify account is still locked</strong> (prevent attacker from resuming)</li>
-    </ul>
-
-    <h4>Escalation to Level 2:</h4>
-
-    <p>
-      This incident should be escalated to L2 SOC analysts for the following reasons:
-    </p>
-
-    <ul>
-      <li><strong>High-Value Target:</strong> Domain Controller is critical infrastructure</li>
-      <li><strong>Automated Attack:</strong> Indicates sophisticated tooling or persistent attacker</li>
-      <li><strong>Unknown Source:</strong> Source IP needs investigation and potential blocking</li>
-      <li><strong>Potential Ongoing Threat:</strong> Attacker may resume after account unlock</li>
-      <li><strong>Forensic Analysis Needed:</strong> Determine if attacker gained access to other accounts</li>
-    </ul>
+    <h3>Step 5: Classification & Response</h3>
 
     <div class="critical-box">
-      <strong>Escalation Summary for L2:</strong><br><br>
-      
-      <strong>Incident Type:</strong> Brute Force Attack - Account Lockout<br>
-      <strong>Affected Account:</strong> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="196d7c6a6d6c6a7c6b596d716b7c786d6e786d7a713775767a7875">[email&#160;protected]</a><br>
-      <strong>Affected System:</strong> DC01 (Domain Controller)<br>
-      <strong>Attack Vector:</strong> SMB Authentication (Port 445)<br>
-      <strong>Timeline:</strong> Mar 4, 2026 @ 15:31:58 UTC<br>
-      <strong>Failed Attempts:</strong> 5+ within 1 second<br>
-      <strong>Outcome:</strong> Account locked, attack blocked by defensive control<br>
-      <strong>MITRE Technique:</strong> T1110.001 (Brute Force: Password Guessing)<br><br>
-      
-      <strong>Recommended L2 Actions:</strong><br>
-      - Full forensic analysis of DC01 authentication logs<br>
-      - Identify and investigate source IP<br>
-      - Check for lateral movement attempts<br>
-      - Review all accounts for similar attack patterns<br>
-      - Consider temporary firewall rule to block source IP<br>
-      - Assess need for enhanced monitoring or MFA deployment
+      <strong>Incident Classification:</strong><br>
+      <strong>Type:</strong> Brute Force Attack (T1110.001)<br>
+      <strong>Severity:</strong> High (Level 9 alert)<br>
+      <strong>Status:</strong> Blocked by account lockout<br>
+      <strong>Source:</strong> Internal (authorized pen test)<br>
+      <strong>Response:</strong> Defense validated, attack successfully mitigated
     </div>
 
-    <h2>What I Learned from This Exercise</h2>
+    <h3>Step 6: Recommendations</h3>
+    <ul>
+      <li>✅ Account lockout policy working as designed</li>
+      <li>✅ SIEM alerts functioning correctly</li>
+      <li>✅ Detection workflow validated</li>
+      <li>💡 Consider: Deploy MFA for additional protection</li>
+      <li>💡 Consider: Rate limiting on SMB authentication</li>
+    </ul>
+
+    <h2>Skills & Knowledge Gained</h2>
+
+    <h3>Offensive Security</h3>
+    <ul>
+      <li>Kali Linux penetration testing tools</li>
+      <li>SMB brute force attack techniques</li>
+      <li>Understanding attacker methodology</li>
+      <li>Attack automation with bash scripting</li>
+    </ul>
+
+    <h3>Defensive Security</h3>
+    <ul>
+      <li>Group Policy configuration and deployment</li>
+      <li>Account lockout policy implementation</li>
+      <li>Active Directory security hardening</li>
+      <li>Security control validation testing</li>
+    </ul>
+
+    <h3>Detection & Response</h3>
+    <ul>
+      <li>Wazuh SIEM rule configuration</li>
+      <li>Windows Event log forensics (4625, 4740)</li>
+      <li>Alert correlation and analysis</li>
+      <li>SOC L1 investigation execution</li>
+    </ul>
+
+    <h3>MITRE ATT&CK Framework</h3>
+    <ul>
+      <li>T1110.001 technique understanding</li>
+      <li>Credential Access tactic identification</li>
+      <li>Evidence-based technique mapping</li>
+      <li>Attack lifecycle analysis</li>
+    </ul>
+
+    <h2>Defense Effectiveness Analysis</h2>
+
+    <p><strong>What Worked:</strong></p>
+    <ul>
+      <li>✅ Account lockout triggered after 5 attempts (as configured)</li>
+      <li>✅ SIEM alerts generated immediately</li>
+      <li>✅ Clear evidence trail in Windows Event logs</li>
+      <li>✅ Attack successfully blocked</li>
+    </ul>
+
+    <p><strong>Limitations of Account Lockout:</strong></p>
+    <ul>
+      <li>⚠️ Doesn't prevent password spraying (1-2 attempts per account)</li>
+      <li>⚠️ Can be used for DoS (lock out legitimate users)</li>
+      <li>⚠️ Temporary lockout - attacker can try again after 15 minutes</li>
+      <li>⚠️ No protection if correct password is in first 5 attempts</li>
+    </ul>
+
+    <div class="alert-box">
+      <strong>Key Insight:</strong> Account lockout is ONE layer of defense. Effective security requires defense-in-depth: lockout policies + MFA + password complexity + monitoring + user education.
+    </div>
+
+    <h2>Real-World Application</h2>
 
     <p>
-      This brute force simulation exercise provided valuable hands-on experience that bridges theoretical knowledge and practical SOC operations.
+      This exercise demonstrates core SOC analyst responsibilities:
     </p>
-
-    <h3>Technical Skills Gained:</h3>
-
-    <h4>1. Offensive Security Understanding</h4>
-
-    <ul>
-      <li>How attackers target authentication mechanisms</li>
-      <li>Tools and techniques used in real-world attacks (smbclient, Hydra, Metasploit)</li>
-      <li>Attack timing and automation patterns</li>
-      <li>Why certain protocols (SMB, RDP, SSH) are common targets</li>
-    </ul>
-
-    <h4>2. Defensive Controls Configuration</h4>
-
-    <ul>
-      <li>Account lockout policy deployment via Group Policy</li>
-      <li>Understanding the balance between security and usability</li>
-      <li>Policy propagation and enforcement across Active Directory domains</li>
-      <li>How defensive controls generate detection events</li>
-    </ul>
-
-    <h4>3. Detection and Analysis</h4>
-
-    <ul>
-      <li>Recognizing brute force attack patterns in SIEM</li>
-      <li>Differentiating automated attacks from user errors</li>
-      <li>Correlating multiple event types (4625 + 4740)</li>
-      <li>Understanding Windows Event IDs and their forensic value</li>
-    </ul>
-
-    <h4>4. MITRE ATT&CK Application</h4>
-
-    <ul>
-      <li>Mapping observed behavior to standardized framework</li>
-      <li>Understanding tactics vs. techniques vs. sub-techniques</li>
-      <li>Using ATT&CK IDs for incident documentation</li>
-      <li>Communicating threats using industry-standard language</li>
-    </ul>
-
-    <h3>SOC Analyst Skills Developed:</h3>
-
-    <h4>1. Alert Triage</h4>
-
-    <ul>
-      <li>Distinguishing high-priority alerts from noise</li>
-      <li>Gathering context quickly and efficiently</li>
-      <li>Asking the right investigative questions</li>
-      <li>Building timelines from multiple event sources</li>
-    </ul>
-
-    <h4>2. Severity Classification</h4>
-
-    <ul>
-      <li>Assessing impact based on affected systems</li>
-      <li>Recognizing automation and tooling indicators</li>
-      <li>Understanding when escalation is required</li>
-      <li>Documenting findings clearly for handoff to L2</li>
-    </ul>
-
-    <h4>3. Incident Response</h4>
-
-    <ul>
-      <li>Following structured investigation workflows</li>
-      <li>Balancing speed with thoroughness</li>
-      <li>Communicating findings to stakeholders</li>
-      <li>Recommending appropriate response actions</li>
-    </ul>
-
-    <h3>Why This Matters for My Career:</h3>
+    <ol>
+      <li><strong>Understanding Attacks:</strong> How brute force works, why attackers use it</li>
+      <li><strong>Configuring Defenses:</strong> Implementing security controls via Group Policy</li>
+      <li><strong>Validating Controls:</strong> Testing that defenses work as expected</li>
+      <li><strong>Detection:</strong> Monitoring SIEM alerts for attack indicators</li>
+      <li><strong>Investigation:</strong> Analyzing event logs and correlating evidence</li>
+      <li><strong>Documentation:</strong> Recording findings and recommendations</li>
+    </ol>
 
     <div class="success-box">
-      <strong>Real-World Relevance:</strong><br><br>
-      
-      This exact scenario—detecting and investigating brute force attacks—happens multiple times per day in enterprise SOCs. By simulating this attack in my own lab, I've demonstrated:
-      <br><br>
-      
-      ✅ <strong>Practical experience</strong> with real attack techniques<br>
-      ✅ <strong>Understanding of defensive controls</strong> and why they matter<br>
-      ✅ <strong>Detection capability</strong> using enterprise SIEM tools<br>
-      ✅ <strong>Investigation methodology</strong> following industry best practices<br>
-      ✅ <strong>Initiative and curiosity</strong> to build my own learning environment<br><br>
-      
-      I didn't wait for a job to start learning SOC operations. I created my own SOC, simulated real attacks, and practiced incident response. That's the kind of proactive learning that makes effective security professionals.
+      <strong>Career Readiness:</strong> This exercise proves I can configure security controls, simulate realistic attacks, detect threats via SIEM, and investigate security events - the complete SOC analyst skill set from defense configuration through incident investigation.
     </div>
 
-    <h2>Defensive Recommendations</h2>
-
+    <h2>Next Investigation: Password Spraying</h2>
     <p>
-      Based on this exercise, here are the defensive measures that would strengthen protection against brute force attacks in a real enterprise environment:
+      Brute force is loud and easily detected. In my next lab, I investigated a stealthier attack:
     </p>
-
-    <h3>1. Multi-Factor Authentication (MFA)</h3>
-
-    <p>
-      MFA would have completely prevented this attack, even with a correct password. Modern enterprises deploy MFA for:
-    </p>
-
     <ul>
-      <li>VPN access</li>
-      <li>Remote Desktop (RDP)</li>
-      <li>Email and Office 365</li>
-      <li>Administrative accounts</li>
-      <li>Cloud applications</li>
+      <li>✅ Password spraying: 1 password against many accounts</li>
+      <li>✅ Bypasses account lockout controls</li>
+      <li>✅ Requires advanced correlation to detect</li>
+      <li>✅ Demonstrates why brute force protection alone is insufficient</li>
     </ul>
 
-    <h3>2. Account Lockout Policy Tuning</h3>
+  </main>
 
-    <p>
-      My 5-attempt threshold was relatively permissive. Enterprise environments often use:
-    </p>
-
-    <ul>
-      <li><strong>3 attempts</strong> for privileged accounts</li>
-      <li><strong>5 attempts</strong> for standard users</li>
-      <li><strong>Longer lockout durations</strong> (30-60 minutes) for critical systems</li>
-    </ul>
-
-    <h3>3. Network Segmentation</h3>
-
-    <p>
-      Limiting which systems can communicate with Domain Controllers reduces attack surface:
-    </p>
-
-    <ul>
-      <li>Restrict SMB (445/tcp) to authorized systems only</li>
-      <li>Firewall rules blocking external SMB access</li>
-      <li>VLANs separating user workstations from servers</li>
-    </ul>
-
-    <h3>4. Enhanced Monitoring and Alerting</h3>
-
-    <p>
-      SIEM rules should trigger alerts for:
-    </p>
-
-    <ul>
-      <li>5+ failed logins within 5 minutes</li>
-      <li>Any account lockout event (Event ID 4740)</li>
-      <li>Failed authentications from unusual source IPs</li>
-      <li>Multiple accounts targeted from same source</li>
-    </ul>
-
-    <h3>5. Password Policies</h3>
-
-    <ul>
-      <li>Minimum 12-14 character passwords</li>
-      <li>Complexity requirements (uppercase, lowercase, numbers, symbols)</li>
-      <li>Password history (prevent reuse)</li>
-      <li>Regular password changes for privileged accounts</li>
-      <li>Blocklist of common passwords</li>
-    </ul>
-
-    <h2>Next Steps and Future Lab Exercises</h2>
-
-    <p>
-      This brute force simulation is just one attack technique. Future lab exercises will include:
-    </p>
-
-    <h3>Planned Attack Simulations:</h3>
-
-    <ul>
-      <li><strong>Password Spraying (T1110.003):</strong> Try one password against many users</li>
-      <li><strong>Credential Stuffing:</strong> Test leaked credentials from data breaches</li>
-      <li><strong>Kerberoasting (T1558.003):</strong> Extract and crack service account tickets</li>
-      <li><strong>Pass-the-Hash (T1550.002):</strong> Lateral movement with NTLM hashes</li>
-      <li><strong>Golden Ticket (T1558.001):</strong> Forged Kerberos tickets for persistence</li>
-    </ul>
-
-    <h3>Detection Improvements:</h3>
-
-    <ul>
-      <li>Fine-tune Wazuh correlation rules</li>
-      <li>Reduce false positive alerts</li>
-      <li>Implement automated response actions</li>
-      <li>Create custom dashboards for authentication monitoring</li>
-    </ul>
-
-    <h2>Conclusion</h2>
-
-    <p>
-      Simulating a brute force attack in my home SOC lab provided invaluable hands-on experience that directly translates to real-world SOC operations.
-    </p>
-
-    <p>
-      I learned that effective security requires understanding both offense and defense. By thinking like an attacker while building defensive capabilities, I gained insight into:
-    </p>
-
-    <ul>
-      <li>How attacks actually appear in logs (not just theory)</li>
-      <li>Why defensive controls matter and how they work</li>
-      <li>What SIEM alerts look like during real attacks</li>
-      <li>How to investigate and classify security incidents</li>
-      <li>When to escalate from L1 to L2 analysts</li>
-    </ul>
-
-    <p>
-      More importantly, this exercise reinforced that SOC analysts aren't just button-clickers who acknowledge alerts. We're investigators who understand attacker methodology, recognize patterns, correlate events, and make judgment calls about what requires escalation.
-    </p>
-
-    <p>
-      Building this lab and simulating attacks demonstrates initiative, curiosity, and the drive to understand cybersecurity deeply—not just surface-level knowledge. This is the kind of practical experience that prepares someone for real SOC work.
-    </p>
-
-    <p>
-      If you're a
+</body>
+</html>
