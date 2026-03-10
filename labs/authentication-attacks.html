@@ -129,7 +129,7 @@
       <li>Unauthorized access attempts</li>
     </ul>
 
-    <img src="Screenshot_2026-02-03_034351.png" alt="Windows Event ID 4625 Failed Logon">
+    <img src="Screenshot 2026-02-03 034351.png" alt="Windows Event ID 4625 Failed Logon">
 
     <h3>Event Fields for Investigation:</h3>
     <table>
@@ -165,7 +165,7 @@
       </tr>
     </table>
 
-    <img src="Screenshot_2026-02-03_035021.png" alt="Event ID 4625 Details">
+    <img src="Screenshot 2026-02-03 035021.png" alt="Event ID 4625 Details">
 
     <h2>Wazuh SIEM Detection: Rule 60122</h2>
     
@@ -173,7 +173,7 @@
       Wazuh Rule 60122 triggers on Windows failed logon events, providing centralized monitoring and alerting for authentication failures.
     </p>
 
-    <img src="Screenshot_2026-02-03_040026.png" alt="Wazuh Rule 60122 Alert">
+    <img src="Screenshot 2026-02-03 040026.png" alt="Wazuh Rule 60122 Alert">
 
     <h3>Rule Details:</h3>
     <div class="code-box">
@@ -193,7 +193,7 @@ MITRE ATT&CK: T1078 (Valid Accounts)
       <li>Integration with MITRE ATT&CK framework</li>
     </ul>
 
-    <img src="Screenshot_2026-02-03_040217.png" alt="Wazuh SIEM Dashboard">
+    <img src="Screenshot 2026-02-03 040217.png" alt="Wazuh SIEM Dashboard">
 
     <h2>Account Lockout Detection: Event ID 4740</h2>
     
@@ -201,7 +201,7 @@ MITRE ATT&CK: T1078 (Valid Accounts)
       When multiple failed authentication attempts exceed the lockout threshold, Windows generates Event ID 4740 - indicating a potential brute force attack.
     </p>
 
-    <img src="Screenshot_2026-02-04_020600.png" alt="Event ID 4740 Account Lockout">
+    <img src="Screenshot 2026-02-04 020600.png" alt="Event ID 4740 Account Lockout">
 
     <h3>Event ID 4740 Analysis:</h3>
     <div class="code-box">
@@ -216,7 +216,7 @@ Timestamp: When lockout occurred
       <strong>Critical Alert:</strong> Event ID 4740 indicates defensive controls activated after multiple failed attempts. This requires immediate SOC investigation to determine if attack is ongoing or if account owner needs assistance.
     </div>
 
-    <img src="Screenshot_2026-02-04_020617.png" alt="Account Lockout Event Details">
+    <img src="Screenshot 2026-02-04 020617.png" alt="Account Lockout Event Details">
 
     <h2>SOC L1 Investigation Workflow</h2>
 
@@ -236,7 +236,7 @@ Timestamp: When lockout occurred
       <li>✅ Timeline: When attempts occurred</li>
     </ul>
 
-    <img src="Screenshot_2026-02-04_020625.png" alt="Investigation Timeline">
+    <img src="Screenshot 2026-02-04 020625.png" alt="Investigation Timeline">
 
     <h3>Step 3: Pattern Analysis</h3>
     <p><strong>Questions to answer:</strong></p>
@@ -266,7 +266,7 @@ Timestamp: When lockout occurred
       </tr>
     </table>
 
-    <img src="Screenshot_2026-02-04_021435.png" alt="MITRE ATT&CK Mapping">
+    <img src="Screenshot 2026-02-04 021435.png" alt="MITRE ATT&CK Mapping">
 
     <h3>Step 5: Classification & Response</h3>
     <div class="info-box">
