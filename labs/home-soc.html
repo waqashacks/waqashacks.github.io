@@ -2,429 +2,313 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Implementing a Home SOC Lab</title>
-  <link rel="stylesheet" href="../assets/css/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enterprise SOC Lab Infrastructure | Waqas Ibrahim - SOC Analyst</title>
   <style>
-    /* Additional styling for better readability */
-    .content {
-      max-width: 900px;
-      margin: 0 auto;
-      line-height: 1.7;
-    }
-    
-    .content h1 {
-      font-size: 2.2em;
-      margin-bottom: 20px;
-      border-bottom: 2px solid #e1e4e8;
-      padding-bottom: 10px;
-    }
-    
-    .content h2 {
-      font-size: 1.6em;
-      margin-top: 40px;
-      margin-bottom: 15px;
-    }
-    
-    .content h3 {
-      font-size: 1.3em;
-      margin-top: 25px;
-      margin-bottom: 12px;
-    }
-    
-    .content p {
-      margin-bottom: 15px;
-      text-align: justify;
-    }
-    
-    .content ul, .content ol {
-      margin-bottom: 20px;
-      padding-left: 30px;
-    }
-    
-    .content li {
-      margin-bottom: 8px;
-    }
-    
-    .content img {
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; line-height: 1.6; color: #2d3748; background: #f8f9fa; }
+    nav { background: #1a202c; color: white; padding: 1rem 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    nav .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+    nav .logo { font-size: 1.5em; font-weight: 700; }
+    nav .logo a, nav a { color: white; text-decoration: none; font-weight: 500; transition: color 0.2s; }
+    nav a:hover { color: #667eea; }
+    nav ul { display: flex; list-style: none; gap: 30px; }
+    .blog-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 20px; text-align: center; }
+    .blog-header h1 { font-size: 2.5em; margin-bottom: 15px; font-weight: 700; }
+    .blog-header .meta { font-size: 1.1em; opacity: 0.9; margin-bottom: 10px; }
+    .blog-header .mitre { background: rgba(255,255,255,0.2); display: inline-block; padding: 8px 20px; border-radius: 20px; margin-top: 10px; font-family: monospace; font-size: 0.95em; }
+    .skills-highlight { background: white; max-width: 1200px; margin: -40px auto 40px; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); position: relative; z-index: 10; }
+    .skills-highlight h2 { color: #667eea; margin-bottom: 25px; font-size: 1.8em; text-align: center; }
+    .skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+    .skill-box { background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; }
+    .skill-box h3 { color: #2d3748; margin-bottom: 12px; font-size: 1.2em; }
+    .skill-box ul { list-style: none; padding: 0; }
+    .skill-box li { padding: 6px 0; color: #4a5568; font-size: 0.95em; }
+    .skill-box li:before { content: "✓ "; color: #28a745; font-weight: bold; margin-right: 8px; }
+    .content { max-width: 900px; margin: 0 auto 60px; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .content h2 { font-size: 1.8em; margin: 40px 0 15px; color: #1a202c; font-weight: 700; }
+    .content h3 { font-size: 1.4em; margin: 25px 0 12px; color: #2d3748; font-weight: 600; }
+    .content p { margin-bottom: 15px; color: #4a5568; line-height: 1.8; }
+    .content ul, .content ol { margin: 20px 0; padding-left: 30px; color: #4a5568; }
+    .content li { margin-bottom: 10px; line-height: 1.7; }
+    .content img { max-width: 100%; height: auto; margin: 20px auto; display: block; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .content table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .content th, .content td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    .content th { background: #f8f9fa; font-weight: 600; color: #2d3748; }
+    .info-box { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px 20px; margin: 20px 0; border-radius: 4px; color: #0c5460; }
+    .success-box { background: #d4edda; border-left: 4px solid #28a745; padding: 15px 20px; margin: 20px 0; border-radius: 4px; color: #155724; }
   </style>
-
 </head>
 <body>
+  <nav>
+    <div class="container">
+      <div class="logo"><a href="../index.html">Waqas Ibrahim</a></div>
+      <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../index.html#projects">SOC Labs</a></li>
+        <li><a href="../index.html#about">About</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
 
-<div class="container">
-
-  <div class="container">
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <h2>Waqas Ibrahim</h2>
-    <a href="../index.html">About Me</a>
-    <a href="home-soc.html">Home SOC Lab</a>
-    <a href="authentication-attacks.html">Authentication Attacks</a>
-    <a href="sysmon-endpoint-detection.html">Sysmon Endpoint Detection</a>
-    <a href="brute-force-simulation.html">Brute Force Attack Simulation</a>
-    <a href="password-spraying.html">Password Spraying Attack</a>
+  <div class="blog-header">
+    <h1>Enterprise SOC Lab Infrastructure</h1>
+    <div class="meta">Infrastructure Deployment | SIEM Integration | Detection Engineering</div>
+    <div class="mitre">Foundation for Threat Detection & Incident Response</div>
   </div>
 
-  <!-- Main Content -->
+  <!-- RECRUITER-FOCUSED SKILLS SECTION -->
+  <div class="skills-highlight">
+    <h2>🎯 SOC Analyst Skills Demonstrated</h2>
+    <div class="skills-grid">
+      <div class="skill-box">
+        <h3>Infrastructure Deployment</h3>
+        <ul>
+          <li>Active Directory domain controller setup</li>
+          <li>Enterprise network architecture design</li>
+          <li>pfSense firewall configuration</li>
+          <li>Multi-tier network segmentation</li>
+        </ul>
+      </div>
+      <div class="skill-box">
+        <h3>SIEM Integration</h3>
+        <ul>
+          <li>Wazuh SIEM deployment & configuration</li>
+          <li>Log aggregation from multiple sources</li>
+          <li>Agent installation & management</li>
+          <li>Centralized security monitoring</li>
+        </ul>
+      </div>
+      <div class="skill-box">
+        <h3>Detection Engineering</h3>
+        <ul>
+          <li>Endpoint monitoring setup</li>
+          <li>Log collection architecture</li>
+          <li>Security event correlation</li>
+          <li>Production-grade lab environment</li>
+        </ul>
+      </div>
+      <div class="skill-box">
+        <h3>Technical Skills</h3>
+        <ul>
+          <li>Windows Server administration</li>
+          <li>Linux server management</li>
+          <li>Network troubleshooting</li>
+          <li>Virtualization (VirtualBox/VMware)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
   <main class="content">
-
-    <h1>Implementing a Realistic Home SOC Lab</h1>
-
-    <p>
-      This walkthrough documents the implementation of a realistic Home SOC lab designed to simulate an enterprise network from a Blue Team / SOC analyst perspective.
-    </p>
-
-    <p>
-      The goal of this lab was not just to install tools, but to understand how logs flow across an enterprise environment and how SOC analysts detect, triage, and investigate security events.
-    </p>
-
-    <p>
-      Rather than following a simplified lab guide, I designed, deployed, troubleshot, and validated each component as it would exist in a real organization.
-    </p>
-
-    <h2>Objectives of the Lab</h2>
-    <ul>
-      <li>Build an enterprise-style internal network</li>
-      <li>Simulate an enterprise Active Directory environment</li>
-      <li>Centralize logs using a SIEM</li>
-      <li>Monitor endpoints and servers</li>
-      <li>Understand SOC Level 1 investigation workflows</li>
-      <li>Strengthen Helpdesk-level troubleshooting skills</li>
-    </ul>
-
-    <h2>High-Level Architecture</h2>
     
+    <h2>Executive Summary</h2>
     <p>
-      The lab simulates a small enterprise network consisting of:
+      <strong>What I Did:</strong> Designed and deployed a production-grade SOC lab environment with Active Directory, Wazuh SIEM, pfSense firewall, and Windows endpoints to simulate enterprise security operations.
+    </p>
+    <p>
+      <strong>Why It Matters:</strong> Rather than waiting for a job to learn SOC operations, I built my own infrastructure to practice real-world threat detection, log analysis, and incident response. This demonstrates initiative and hands-on technical ability.
+    </p>
+    <p>
+      <strong>Result:</strong> Fully functional enterprise-grade lab serving as the foundation for all subsequent attack simulations and detection exercises in my portfolio.
     </p>
 
-    <ul>
-      <li><strong>pfSense Firewall</strong> - Gateway, NAT, routing, and perimeter security</li>
-      <li><strong>DC01</strong> - Active Directory Domain Controller and DNS Server</li>
-      <li><strong>HR-PC01</strong> - Domain-joined Windows endpoint</li>
-      <li><strong>Ubuntu Server</strong> - Running Wazuh SIEM Manager</li>
-    </ul>
-
-    <p>
-      All systems communicate within a private internal network.
-    </p>
-
-    <!-- Screenshot -->
-    <img src="Network Diagram.png" alt="Network Architecture Diagram" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
-
-    <h2>Network Design & IP Addressing</h2>
+    <h2>Lab Architecture</h2>
     
+    <img src="Network_Diagram.png" alt="SOC Lab Network Architecture">
+
+    <h3>Network Components:</h3>
+    <table>
+      <tr>
+        <th>System</th>
+        <th>Role</th>
+        <th>IP Address</th>
+        <th>Purpose</th>
+      </tr>
+      <tr>
+        <td><strong>pfSense</strong></td>
+        <td>Firewall/Gateway</td>
+        <td>192.168.10.1</td>
+        <td>Network segmentation, routing</td>
+      </tr>
+      <tr>
+        <td><strong>DC01</strong></td>
+        <td>Domain Controller</td>
+        <td>192.168.10.10</td>
+        <td>Active Directory, authentication</td>
+      </tr>
+      <tr>
+        <td><strong>tw-siem01</strong></td>
+        <td>SIEM Server</td>
+        <td>192.168.10.20</td>
+        <td>Wazuh log aggregation & analysis</td>
+      </tr>
+      <tr>
+        <td><strong>HR-PC01</strong></td>
+        <td>Endpoint</td>
+        <td>192.168.10.128</td>
+        <td>Windows 11 workstation monitoring</td>
+      </tr>
+    </table>
+
+    <h2>Infrastructure Deployment</h2>
+
+    <h3>1. pfSense Firewall Configuration</h3>
     <p>
-      I used the private subnet <strong>192.168.10.0/24</strong>, which is commonly found in enterprise environments and supports up to 254 hosts.
+      Deployed pfSense as the network gateway to simulate enterprise network segmentation and routing.
     </p>
 
-    <p>
-      This subnet size is ideal for:
-    </p>
+    <img src="PfSense_Dashboard.png" alt="pfSense Dashboard">
+
+    <p><strong>Configuration:</strong></p>
     <ul>
-      <li>Simple routing and troubleshooting</li>
-      <li>Lab scalability</li>
-      <li>Mimicking real enterprise internal networks</li>
+      <li>LAN interface: 192.168.10.1/24</li>
+      <li>DHCP server for automatic IP assignment</li>
+      <li>Firewall rules for internal network traffic</li>
+      <li>Gateway for internet access</li>
     </ul>
 
+    <img src="PfSense_Interfaces.png" alt="pfSense Interface Configuration">
+
+    <h3>2. Active Directory Domain Controller (DC01)</h3>
     <p>
-      The Domain Controller also acts as the DNS server, which reflects a typical Windows enterprise setup.
+      Deployed Windows Server 2022 as domain controller to simulate enterprise authentication infrastructure.
     </p>
 
-    <img src="PfSense Interfaces.png" alt="pfSense Interfaces & LAN IP" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <img src="AD_Users_and_Computers.png" alt="Active Directory Users and Computers">
 
-    <h2>pfSense Firewall – Network Perimeter</h2>
-
-    <p>
-      pfSense serves as the default gateway for all systems, providing NAT, routing, and network visibility.
-    </p>
-
-    <p>
-      I chose pfSense because it is widely used in enterprises, MSSPs, and SOC training environments. It provides firewall rules, NAT, DHCP, and routing visibility.
-    </p>
-
-    <h3>Configuration</h3>
+    <p><strong>Configuration:</strong></p>
     <ul>
-      <li><strong>WAN:</strong> NAT (VMnet8) for Internet access</li>
-      <li><strong>LAN:</strong> 192.168.10.1/24</li>
-      <li><strong>Role:</strong> Acts as the default gateway for all internal systems</li>
+      <li>Domain: threatwatch.local</li>
+      <li>Created organizational units (OUs) for HR, IT departments</li>
+      <li>User accounts: testuser, JohnDoe, Administrator</li>
+      <li>Group Policy implementation</li>
     </ul>
 
+    <h3>3. Wazuh SIEM Deployment</h3>
     <p>
-      This setup allowed internal machines to communicate with each other and access the internet securely. It helped me understand north-south traffic flow and the firewall's role in a SOC environment.
+      Installed Wazuh on Ubuntu Server to provide centralized security monitoring and log analysis.
     </p>
 
-    <h3>SOC Relevance</h3>
-    <p>
-      From a SOC perspective, pfSense is critical because:
-    </p>
+    <p><strong>Deployment Steps:</strong></p>
     <ul>
-      <li>It controls ingress/egress traffic</li>
-      <li>Firewall logs can indicate scanning or exfiltration attempts</li>
-      <li>Network issues often surface here first</li>
+      <li>Ubuntu Server 22.04 LTS installation</li>
+      <li>Wazuh manager, indexer, and dashboard deployment</li>
+      <li>SSL certificate configuration</li>
+      <li>Web interface access on port 443</li>
     </ul>
 
-    <img src="PfSense Dashboard.png" alt="pfSense Dashboard" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
-
-    <h2>Active Directory Domain Controller (DC01)</h2>
-
+    <h3>4. Endpoint Agent Deployment</h3>
     <p>
-      Active Directory is the heart of enterprise identity. Most attacks involve credential theft, lateral movement, and privilege escalation.
+      Installed Wazuh agents on Windows endpoints to collect security events and forward to SIEM.
     </p>
 
-    <p>
-      Running AD allows realistic SOC detections and helps understand how authentication flows work in enterprise environments.
-    </p>
+    <img src="Active_Agents.png" alt="Wazuh Active Agents Dashboard">
 
-    <h3>Configuration</h3>
+    <p><strong>Agent Configuration:</strong></p>
     <ul>
-      <li><strong>Hostname:</strong> DC01</li>
-      <li><strong>IP Address:</strong> 192.168.10.10 (static)</li>
-      <li><strong>Roles:</strong> Active Directory Domain Services, DNS Server</li>
-      <li><strong>Domain:</strong> threatwatch.local</li>
+      <li>Agent ID 004: DC01 (Domain Controller)</li>
+      <li>Agent ID 006: HR-PC01 (Windows 11 endpoint)</li>
+      <li>Real-time log forwarding enabled</li>
+      <li>Windows Security event collection</li>
     </ul>
 
-    <p>
-      I deployed Active Directory using the internal domain <strong>threatwatch.local</strong>. This non-routable domain is safe for labs and documentation and cannot be discovered externally.
-    </p>
+    <img src="HR-PC01_Agent_is_live.png" alt="HR-PC01 Agent Live Status">
 
-    <p>
-      Publishing an internal domain name like .local in a blog does not expose your network. Attackers cannot reach .local domains from the internet.
-    </p>
+    <div class="success-box">
+      <strong>Result:</strong> All agents reporting successfully to Wazuh SIEM with real-time log collection from domain controller and endpoints.
+    </div>
 
-    <p>
-      Active Directory manages centralized authentication and identity for all domain-joined systems.
-    </p>
+    <h2>Network Architecture Design</h2>
 
-    <h3>DNS Architecture – Why It Matters</h3>
-
-    <p>
-      DNS is often overlooked, but it plays a critical role in security. Domain authentication depends on DNS—Kerberos, LDAP, and AD all require correct name resolution.
-    </p>
-
-    <p>
-      SOC analysts frequently investigate DNS anomalies. All internal systems use DNS Server: 192.168.10.10.
-    </p>
-
-    <p>
-      This configuration allows:
-    </p>
+    <p><strong>Design Principles:</strong></p>
     <ul>
-      <li>Central visibility</li>
-      <li>Consistent authentication behavior</li>
-      <li>Easier troubleshooting</li>
+      <li><strong>Segmentation:</strong> Internal network (192.168.10.0/24) isolated from external threats</li>
+      <li><strong>Centralization:</strong> All security logs flow to Wazuh SIEM for correlation</li>
+      <li><strong>Scalability:</strong> Architecture supports adding additional endpoints and servers</li>
+      <li><strong>Realism:</strong> Mirrors enterprise network topology with firewall, AD, SIEM</li>
     </ul>
 
-    <img src="AD Users and Computers.png" alt="Active Directory Users and Computers" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
+    <h2>Log Collection Architecture</h2>
 
-    <h2>Windows Endpoint (HR-PC01)</h2>
+    <p><strong>Log Sources:</strong></p>
+    <table>
+      <tr>
+        <th>Source</th>
+        <th>Event Types</th>
+        <th>Detection Use Cases</th>
+      </tr>
+      <tr>
+        <td>DC01 (Domain Controller)</td>
+        <td>Event IDs 4624, 4625, 4740</td>
+        <td>Authentication monitoring, account lockouts</td>
+      </tr>
+      <tr>
+        <td>HR-PC01 (Endpoint)</td>
+        <td>Sysmon Event ID 1, Security logs</td>
+        <td>Process execution, PowerShell detection</td>
+      </tr>
+      <tr>
+        <td>Wazuh SIEM</td>
+        <td>Aggregated & correlated events</td>
+        <td>Pattern recognition, incident investigation</td>
+      </tr>
+    </table>
 
-    <p>
-      HR-PC01 simulates a real employee workstation with domain join capabilities, Group Policy enforcement, and security log generation.
-    </p>
+    <h2>Skills & Knowledge Gained</h2>
 
-    <h3>Configuration</h3>
+    <h3>Infrastructure Skills</h3>
     <ul>
-      <li><strong>IP Assignment:</strong> DHCP-assigned</li>
-      <li><strong>Domain:</strong> Joined to threatwatch.local</li>
-      <li><strong>Monitoring:</strong> Wazuh agent installed</li>
+      <li>Enterprise network design and implementation</li>
+      <li>Active Directory deployment and management</li>
+      <li>Firewall configuration and network segmentation</li>
+      <li>Linux and Windows server administration</li>
     </ul>
 
-    <h3>SOC Perspective</h3>
-
-    <p>
-      Endpoints are the most common entry point for attackers through phishing, malware, and credential abuse.
-    </p>
-
-    <p>
-      Monitoring this machine provides visibility into:
-    </p>
+    <h3>SOC Operations</h3>
     <ul>
-      <li>Logon events</li>
-      <li>Process creation</li>
-      <li>Policy changes</li>
+      <li>SIEM deployment and configuration</li>
+      <li>Log aggregation architecture</li>
+      <li>Agent management and troubleshooting</li>
+      <li>Security monitoring infrastructure</li>
     </ul>
 
-    <h2>Wazuh SIEM Manager (Ubuntu Server)</h2>
-
-    <p>
-      Wazuh was deployed on an Ubuntu Server to centralize logs from endpoints and servers. It provides visibility into authentication events, system activity, and security alerts.
-    </p>
-
-    <p>
-      I chose Wazuh because it is:
-    </p>
+    <h3>Problem-Solving</h3>
     <ul>
-      <li>Open-source</li>
-      <li>SOC-friendly</li>
-      <li>Actively used in real environments</li>
+      <li>Network connectivity troubleshooting</li>
+      <li>Agent installation debugging</li>
+      <li>Service configuration and validation</li>
+      <li>Documentation of deployment steps</li>
     </ul>
 
-    <h3>Configuration</h3>
-    <ul>
-      <li><strong>IP Address:</strong> 192.168.10.20</li>
-      <li><strong>Components:</strong> Wazuh Manager + Dashboard</li>
-      <li><strong>Agents:</strong> Deployed to DC01 and HR-PC01</li>
-    </ul>
+    <h2>Why This Lab Matters</h2>
+
+    <div class="info-box">
+      <strong>Career Impact:</strong> This lab demonstrates that I didn't wait for a job to learn SOC operations. I took initiative to build production-grade infrastructure, troubleshoot complex deployments, and create a realistic environment for practicing threat detection and incident response.
+    </div>
 
     <p>
-      Wazuh provides log collection, correlation rules, alerts, and dashboards for comprehensive security monitoring.
+      Every subsequent lab in my portfolio (authentication attacks, brute force, password spraying) is built on this foundation - proving I understand not just individual security concepts, but how they integrate into enterprise-wide security operations.
     </p>
 
-    <img src="Wazuh Dashboard.png" alt="Wazuh Dashboard Overview" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
-
-    <h2>Agent Deployment & Authentication</h2>
-
+    <h2>Foundation for Security Operations</h2>
     <p>
-      Agent enrollment ensures that only trusted endpoints send logs, logs are correctly mapped to hostnames, and duplicate or rogue agents are rejected.
-    </p>
-
-    <p>
-      Wazuh agents were installed and authenticated on both the Domain Controller and the Windows endpoint. This step demonstrated how endpoint telemetry is securely forwarded to a SIEM.
-    </p>
-
-    <p>
-      During setup, duplicate agent names caused authentication errors. This mimics real SOC troubleshooting scenarios and reinforced the importance of:
+      This infrastructure enables all subsequent labs:
     </p>
     <ul>
-      <li>Attention to host naming</li>
-      <li>Understanding manager-agent trust relationships</li>
+      <li>✅ Authentication attack detection</li>
+      <li>✅ Endpoint monitoring with Sysmon</li>
+      <li>✅ Brute force attack simulation</li>
+      <li>✅ Password spraying detection</li>
+      <li>✅ Incident investigation workflows</li>
     </ul>
 
-    <img src="Wazuh Agents.png" alt="Wazuh Agent Status" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
-
-    <h2>Log Flow Explained (SOC View)</h2>
-
-    <p>
-      Understanding how logs flow through the environment is crucial for SOC analysts. Here's an example log flow:
-    </p>
-
-    <ol>
-      <li>User logs into HR-PC01</li>
-      <li>Authentication request sent to DC01</li>
-      <li>DC01 validates credentials via Kerberos</li>
-      <li>Security event generated on DC01</li>
-      <li>Event forwarded to Wazuh via agent</li>
-      <li>Wazuh parses and correlates logs</li>
-      <li>Alerts appear in dashboard (if rules match)</li>
-    </ol>
-
-    <p>
-      This is exactly how real SOC pipelines work.
-    </p>
-
-    <h2>Security Events & SOC Visibility</h2>
-
-    <p>
-      Once fully integrated, login events, authentication failures, and system activity became visible in the SIEM.
-    </p>
-
-    <p>
-      Each endpoint sends Windows Security logs, authentication events, and system events to the central SIEM for analysis.
-    </p>
-
-    <p>
-      This enabled basic alert triage and investigation workflows, allowing me to practice:
-    </p>
-    <ul>
-      <li>Identifying false positives</li>
-      <li>Understanding alert context</li>
-      <li>Knowing when escalation is required</li>
-    </ul>
-
-    <img src="Wazuh Events.png" alt="Security Events in Wazuh" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
-
-    <h2>What This Lab Taught Me – SOC Level 1 Skills</h2>
-
-    <h3>Log Interpretation</h3>
-    <ul>
-      <li>Understanding Windows Security Event IDs</li>
-      <li>Correlating authentication failures</li>
-      <li>Recognizing abnormal patterns</li>
-    </ul>
-
-    <h3>Alert Triage</h3>
-    <ul>
-      <li>Identifying false positives</li>
-      <li>Understanding alert context</li>
-      <li>Knowing when escalation is required</li>
-    </ul>
-
-    <h3>Network Awareness</h3>
-    <ul>
-      <li>Diagnosing DNS failures</li>
-      <li>Resolving gateway misconfigurations</li>
-      <li>Understanding NAT vs routing issues</li>
-    </ul>
-
-    <h2>What This Lab Taught Me – Helpdesk Level 1 Skills</h2>
-
-    <p>
-      This lab unintentionally strengthened Helpdesk fundamentals, which are critical for SOC analysts:
-    </p>
-
-    <ul>
-      <li>Troubleshooting DNS issues</li>
-      <li>Resolving authentication failures</li>
-      <li>Fixing connectivity problems</li>
-      <li>Understanding "no internet" vs "no DNS"</li>
-      <li>Verifying gateways and IP configurations</li>
-    </ul>
-
-    <p>
-      Many SOC alerts are actually caused by misconfigurations, not attacks. Knowing the difference is essential.
-    </p>
-
-    <h2>Key Takeaways</h2>
-
-    <p>
-      This was not just a technical exercise—it was an operational mindset shift. I learned:
-    </p>
-
-    <ul>
-      <li>How logs flow across an enterprise network</li>
-      <li>How security tools fit together in a SOC environment</li>
-      <li>Why identity is central to SOC operations</li>
-      <li>How attackers abuse authentication and DNS</li>
-      <li>The importance of centralized monitoring</li>
-      <li>How SOC analysts investigate alerts, not just respond to them</li>
-      <li>Common configuration and troubleshooting challenges</li>
-    </ul>
-
-    <p>
-      This lab bridges the gap between theory and practice, and between student knowledge and SOC analyst readiness.
-    </p>
-
-    <h2>Next Steps</h2>
-    
-    <p>
-      Future improvements and expansions include:
-    </p>
-
-    <ul>
-      <li>Sysmon integration for enhanced process and network monitoring</li>
-      <li>Attack simulation to test detection capabilities</li>
-      <li>MITRE ATT&CK mapping for threat intelligence</li>
-      <li>Alert tuning to reduce noise and false positives</li>
-      <li>Incident response playbook development</li>
-      <li>Detection engineering and custom rule creation</li>
-    </ul>
-
-    <h2>Final Thoughts</h2>
-
-    <p>
-      Building this Home SOC lab gave me practical exposure to enterprise security architecture, SOC workflows, and real troubleshooting scenarios.
-    </p>
-
-    <p>
-      It strengthened my readiness for SOC Level 1 roles, Helpdesk-to-SOC transitions, and Blue Team security operations.
-    </p>
+    <div class="success-box">
+      <strong>Professional Readiness:</strong> This lab proves I can deploy, configure, and operate the same tools and infrastructure used in enterprise SOC environments - making me immediately productive in a SOC analyst role.
+    </div>
 
   </main>
-
-</div>
 
 </body>
 </html>
