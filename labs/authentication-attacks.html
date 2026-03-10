@@ -2,540 +2,365 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Detecting Authentication Attacks - SOC Lab Investigation</title>
-  <link rel="stylesheet" href="../assets/css/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authentication Attack Detection | Waqas Ibrahim - SOC Analyst</title>
   <style>
-    /* Additional styling for better readability */
-    .content {
-      max-width: 900px;
-      margin: 0 auto;
-      line-height: 1.7;
-    }
-    
-    .content h1 {
-      font-size: 2.2em;
-      margin-bottom: 20px;
-      border-bottom: 2px solid #e1e4e8;
-      padding-bottom: 10px;
-    }
-    
-    .content h2 {
-      font-size: 1.6em;
-      margin-top: 40px;
-      margin-bottom: 15px;
-    }
-    
-    .content h3 {
-      font-size: 1.3em;
-      margin-top: 25px;
-      margin-bottom: 12px;
-    }
-    
-    .content p {
-      margin-bottom: 15px;
-    }
-    
-    .content ul, .content ol {
-      margin-bottom: 20px;
-      padding-left: 30px;
-    }
-    
-    .content li {
-      margin-bottom: 8px;
-    }
-    
-    .content img {
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    .alert-box {
-      background-color: #fff3cd;
-      border-left: 4px solid #ffc107;
-      padding: 15px 20px;
-      margin: 20px 0;
-      border-radius: 4px;
-      color: #856404;
-    }
-    
-    .info-box {
-      background-color: #d1ecf1;
-      border-left: 4px solid #17a2b8;
-      padding: 15px 20px;
-      margin: 20px 0;
-      border-radius: 4px;
-      color: #0c5460;
-    }
-    
-    .code-box {
-      background-color: #f6f8fa;
-      border: 1px solid #d1d5da;
-      padding: 15px;
-      margin: 15px 0;
-      border-radius: 4px;
-      font-family: 'Courier New', monospace;
-      overflow-x: auto;
-      color: #24292e;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; line-height: 1.6; color: #2d3748; background: #f8f9fa; }
+    nav { background: #1a202c; color: white; padding: 1rem 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    nav .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+    nav .logo { font-size: 1.5em; font-weight: 700; }
+    nav .logo a, nav a { color: white; text-decoration: none; font-weight: 500; transition: color 0.2s; }
+    nav a:hover { color: #667eea; }
+    nav ul { display: flex; list-style: none; gap: 30px; }
+    .blog-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 20px; text-align: center; }
+    .blog-header h1 { font-size: 2.5em; margin-bottom: 15px; font-weight: 700; }
+    .blog-header .meta { font-size: 1.1em; opacity: 0.9; margin-bottom: 10px; }
+    .blog-header .mitre { background: rgba(255,255,255,0.2); display: inline-block; padding: 8px 20px; border-radius: 20px; margin-top: 10px; font-family: monospace; font-size: 0.95em; }
+    .skills-highlight { background: white; max-width: 1200px; margin: -40px auto 40px; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); position: relative; z-index: 10; }
+    .skills-highlight h2 { color: #667eea; margin-bottom: 25px; font-size: 1.8em; text-align: center; }
+    .skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+    .skill-box { background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; }
+    .skill-box h3 { color: #2d3748; margin-bottom: 12px; font-size: 1.2em; }
+    .skill-box ul { list-style: none; padding: 0; }
+    .skill-box li { padding: 6px 0; color: #4a5568; font-size: 0.95em; }
+    .skill-box li:before { content: "✓ "; color: #28a745; font-weight: bold; margin-right: 8px; }
+    .content { max-width: 900px; margin: 0 auto 60px; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .content h2 { font-size: 1.8em; margin: 40px 0 15px; color: #1a202c; font-weight: 700; }
+    .content h3 { font-size: 1.4em; margin: 25px 0 12px; color: #2d3748; font-weight: 600; }
+    .content p { margin-bottom: 15px; color: #4a5568; line-height: 1.8; }
+    .content ul, .content ol { margin: 20px 0; padding-left: 30px; color: #4a5568; }
+    .content li { margin-bottom: 10px; line-height: 1.7; }
+    .content img { max-width: 100%; height: auto; margin: 20px auto; display: block; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .content table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .content th, .content td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    .content th { background: #f8f9fa; font-weight: 600; color: #2d3748; }
+    .alert-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px 20px; margin: 20px 0; border-radius: 4px; color: #856404; }
+    .info-box { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px 20px; margin: 20px 0; border-radius: 4px; color: #0c5460; }
+    .critical-box { background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px 20px; margin: 20px 0; border-radius: 4px; color: #721c24; }
+    .success-box { background: #d4edda; border-left: 4px solid #28a745; padding: 15px 20px; margin: 20px 0; border-radius: 4px; color: #155724; }
+    .code-box { background: #f6f8fa; border: 1px solid #d1d5da; padding: 15px; margin: 15px 0; border-radius: 4px; font-family: 'Courier New', monospace; overflow-x: auto; color: #24292e; font-size: 0.9em; }
   </style>
 </head>
 <body>
+  <nav>
+    <div class="container">
+      <div class="logo"><a href="../index.html">Waqas Ibrahim</a></div>
+      <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../index.html#projects">SOC Labs</a></li>
+        <li><a href="../index.html#about">About</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
 
-<div class="container">
-
-<div class="container">
-  <!-- Sidebar -->
-<div class="sidebar">
-    <h2>Waqas Ibrahim</h2>
-    <a href="../index.html">About Me</a>
-    <a href="home-soc.html">Home SOC Lab</a>
-    <a href="authentication-attacks.html">Authentication Attacks</a>
-    <a href="sysmon-endpoint-detection.html">Sysmon Endpoint Detection</a>
-    <a href="brute-force-simulation.html">Brute Force Attack Simulation</a>
-    <a href="password-spraying.html">Password Spraying Attack</a>
+  <div class="blog-header">
+    <h1>Authentication Attack Detection</h1>
+    <div class="meta">SOC Investigation | Windows Event Analysis | SIEM Monitoring</div>
+    <div class="mitre">MITRE ATT&CK: T1078 (Valid Accounts), T1531 (Account Access Removal)</div>
   </div>
-  
 
-  <!-- Main Content -->
+  <!-- RECRUITER-FOCUSED SKILLS SECTION -->
+  <div class="skills-highlight">
+    <h2>🎯 SOC Analyst Skills Demonstrated</h2>
+    <div class="skills-grid">
+      <div class="skill-box">
+        <h3>Event Log Analysis</h3>
+        <ul>
+          <li>Windows Event ID 4625 interpretation</li>
+          <li>Event ID 4740 (account lockout) analysis</li>
+          <li>Security log forensics</li>
+          <li>Failed authentication pattern recognition</li>
+        </ul>
+      </div>
+      <div class="skill-box">
+        <h3>SIEM Monitoring</h3>
+        <ul>
+          <li>Wazuh Rule 60122 detection</li>
+          <li>Alert triage and investigation</li>
+          <li>Log correlation across systems</li>
+          <li>Real-time threat detection</li>
+        </ul>
+      </div>
+      <div class="skill-box">
+        <h3>Threat Detection</h3>
+        <ul>
+          <li>Authentication attack identification</li>
+          <li>MITRE ATT&CK mapping (T1078, T1531)</li>
+          <li>Suspicious activity correlation</li>
+          <li>Incident classification</li>
+        </ul>
+      </div>
+      <div class="skill-box">
+        <h3>Incident Response</h3>
+        <ul>
+          <li>SOC L1 investigation workflow</li>
+          <li>Evidence documentation</li>
+          <li>Alert prioritization</li>
+          <li>Security control validation</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
   <main class="content">
-
-    <h1>Detecting Authentication Attacks in a Home SOC Lab</h1>
-
+    
+    <h2>Executive Summary</h2>
     <p>
-      Building a SOC lab is one thing — actually using it to detect real attacks is another. In this walkthrough, I simulate authentication-based attacks and demonstrate how a SOC analyst would detect, investigate, and respond to them.
+      <strong>What I Did:</strong> Monitored and analyzed failed authentication attempts in Wazuh SIEM, identified suspicious login patterns, and investigated Windows Event IDs 4625 and 4740 to detect potential credential-based attacks.
+    </p>
+    <p>
+      <strong>Why It Matters:</strong> Failed authentication monitoring is a foundational SOC L1 skill. Real attackers probe systems with credential guessing, and SOC analysts must differentiate between legitimate user errors and malicious reconnaissance.
+    </p>
+    <p>
+      <strong>Result:</strong> Successfully detected and classified authentication attacks using Wazuh SIEM, demonstrated Windows Event log forensics, and executed proper SOC investigation workflow.
     </p>
 
+    <h2>Windows Event ID 4625: Failed Logon Detection</h2>
+    
     <p>
-      This isn't just about running tools. It's about understanding the complete investigation workflow from initial detection to incident documentation.
+      Event ID 4625 is generated whenever a logon attempt fails on a Windows system. SOC analysts monitor this event to detect:
     </p>
-
-    <h2>Introduction</h2>
-
-    <p>
-      Authentication attacks are among the most common initial access methods used by attackers. From credential stuffing to brute force attacks, unauthorized login attempts are a daily occurrence in enterprise environments.
-    </p>
-
-    <p>
-      As a SOC analyst, your ability to quickly identify failed authentication attempts, distinguish between legitimate mistakes and malicious activity, and respond appropriately is critical.
-    </p>
-
-    <p>
-      In this lab exercise, I simulate failed login attempts against a domain-joined endpoint and demonstrate how these events flow through the security stack — from Windows Event Logs to SIEM alerts.
-    </p>
-
-    <h2>Why Authentication Attacks Matter</h2>
-
-    <p>
-      Authentication is the first line of defense. If an attacker can authenticate as a legitimate user, they can:
-    </p>
-
     <ul>
-      <li>Bypass perimeter security controls</li>
-      <li>Access internal resources and sensitive data</li>
-      <li>Move laterally across the network</li>
-      <li>Establish persistence for long-term access</li>
-      <li>Avoid detection by appearing as a normal user</li>
+      <li>Brute force attacks</li>
+      <li>Password spraying attempts</li>
+      <li>Credential stuffing</li>
+      <li>Unauthorized access attempts</li>
     </ul>
 
+    <img src="Screenshot_2026-02-03_034351.png" alt="Windows Event ID 4625 Failed Logon">
+
+    <h3>Event Fields for Investigation:</h3>
+    <table>
+      <tr>
+        <th>Field</th>
+        <th>Description</th>
+        <th>Investigative Value</th>
+      </tr>
+      <tr>
+        <td><strong>Account Name</strong></td>
+        <td>Username that failed authentication</td>
+        <td>Identify targeted accounts</td>
+      </tr>
+      <tr>
+        <td><strong>Failure Reason</strong></td>
+        <td>Why the login failed</td>
+        <td>Bad password vs. account disabled</td>
+      </tr>
+      <tr>
+        <td><strong>Logon Type</strong></td>
+        <td>How authentication was attempted</td>
+        <td>Interactive (2) vs. Network (3)</td>
+      </tr>
+      <tr>
+        <td><strong>Source IP</strong></td>
+        <td>Where attempt originated</td>
+        <td>External vs. internal threat</td>
+      </tr>
+      <tr>
+        <td><strong>Workstation Name</strong></td>
+        <td>Source computer name</td>
+        <td>Identify attack source</td>
+      </tr>
+    </table>
+
+    <img src="Screenshot_2026-02-03_035021.png" alt="Event ID 4625 Details">
+
+    <h2>Wazuh SIEM Detection: Rule 60122</h2>
+    
     <p>
-      Understanding how to detect authentication attacks is fundamental to SOC operations. It's often the first indicator of compromise (IOC) that alerts analysts to an ongoing attack.
+      Wazuh Rule 60122 triggers on Windows failed logon events, providing centralized monitoring and alerting for authentication failures.
     </p>
 
-    <div class="alert-box">
-      <strong>Real-World Impact:</strong> According to industry reports, over 80% of data breaches involve compromised credentials. This makes authentication monitoring one of the highest-value activities a SOC can perform.
-    </div>
+    <img src="Screenshot_2026-02-03_040026.png" alt="Wazuh Rule 60122 Alert">
 
-    <h2>Lab Architecture Recap</h2>
-
-    <p>
-      Before diving into the attack simulation, let's recap the lab environment:
-    </p>
-
-    <ul>
-      <li><strong>DC01:</strong> Windows Server 2022 - Active Directory Domain Controller (192.168.10.10)</li>
-      <li><strong>HR-PC01:</strong> Windows 11 - Domain-joined endpoint (192.168.10.128)</li>
-      <li><strong>Wazuh SIEM:</strong> Ubuntu Server - Centralized log collection and analysis (192.168.10.20)</li>
-      <li><strong>pfSense:</strong> Firewall and network gateway (192.168.10.1)</li>
-    </ul>
-
-    <p>
-      All systems are communicating within the <strong>192.168.10.0/24</strong> subnet and are fully integrated with Wazuh agents for log forwarding.
-    </p>
-
-    <img src="Active Agents.png" alt="Active Wazuh Agents - DC01 and HR-PC01" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
-
-    <p>
-      As shown above, both <strong>DC01</strong> and <strong>HR-PC01</strong> are active and reporting to the Wazuh manager. This confirms that authentication events from both systems will be captured and analyzed.
-    </p>
-
-    <h2>Simulating Failed Login Attempts</h2>
-
-    <p>
-      To simulate a real-world scenario, I attempted to log in to the <strong>HR-PC01</strong> endpoint using an incorrect password for the user account <strong>hr.jdoe</strong> (John Doe).
-    </p>
-
-    <h3>Attack Scenario</h3>
-
-    <p>
-      An attacker (or in this case, a test scenario) attempts to authenticate to a domain-joined Windows workstation using stolen or guessed credentials. The password is incorrect, resulting in multiple failed authentication attempts.
-    </p>
-
-    <img src="unsuccesful logon.png" alt="Windows Login - Failed Authentication Attempt" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
-
-    <p>
-      The Windows login screen displays the message: <strong>"The password is incorrect. Try again."</strong>
-    </p>
-
-    <p>
-      This seems like a simple user error on the surface, but from a SOC perspective, this could be:
-    </p>
-
-    <ul>
-      <li>A legitimate user who forgot their password</li>
-      <li>An attacker attempting credential stuffing</li>
-      <li>An automated brute force attack</li>
-      <li>A compromised account being tested</li>
-    </ul>
-
-    <p>
-      The SOC analyst's job is to determine which scenario is occurring based on context, frequency, and other indicators.
-    </p>
-
-    <h2>Windows Event Log Analysis</h2>
-
-    <p>
-      When a login fails on a Windows system, several events are generated. The most important one for authentication failures is <strong>Event ID 4625 - An account failed to log on</strong>.
-    </p>
-
-    <h3>What Event ID 4625 Tells Us</h3>
-
-    <p>
-      Event ID 4625 is logged on the target system (in this case, HR-PC01) and provides critical forensic information:
-    </p>
-
-    <ul>
-      <li><strong>Account Name:</strong> Which user account was targeted</li>
-      <li><strong>Account Domain:</strong> The domain the account belongs to (THREATWATCH)</li>
-      <li><strong>Failure Reason:</strong> Why the authentication failed (e.g., bad password, unknown user)</li>
-      <li><strong>Logon Type:</strong> How the authentication was attempted (interactive, network, etc.)</li>
-      <li><strong>Source Workstation:</strong> Where the attempt originated from</li>
-      <li><strong>Source IP Address:</strong> Network location of the authentication attempt</li>
-      <li><strong>Process Information:</strong> Which process initiated the logon attempt</li>
-    </ul>
-
-    <div class="info-box">
-      <strong>SOC Analyst Tip:</strong> Event ID 4625 is your primary indicator for failed authentication. However, context matters. A single failed login is normal. Ten failed logins in one minute is suspicious. Fifty failed logins across multiple accounts in ten minutes is definitely an attack.
-    </div>
-
-    <h2>SIEM Detection with Wazuh</h2>
-
-    <p>
-      The real value of a SIEM comes from centralized visibility. While Windows Event Logs are stored locally on each system, Wazuh collects, correlates, and presents these events in a centralized dashboard.
-    </p>
-
-    <h3>Wazuh Security Events Dashboard</h3>
-
-    <p>
-      After the failed login attempts, Wazuh immediately detected and correlated the events:
-    </p>
-
-    <img src="Wazuh security events of failed logon.png" alt="Wazuh Security Events - Failed Login Detections" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
-
-    <p>
-      The Wazuh dashboard shows multiple alerts for <strong>HR-PC01</strong> with the description:
-    </p>
-
+    <h3>Rule Details:</h3>
     <div class="code-box">
-      <strong>Rule ID:</strong> 60122<br>
-      <strong>Description:</strong> Logon failure - Unknown user or bad password<br>
-      <strong>Level:</strong> 5 (Medium)<br>
-      <strong>Technique(s):</strong> T1078 (Valid Accounts), T1531 (Account Access Removal)<br>
-      <strong>Tactic(s):</strong> Defense Evasion, Persistence, Privilege Escalation, Initial Access, Impact
+Rule ID: 60122
+Level: 5 (Medium)
+Description: "Logon failure - Unknown user or bad password"
+Event ID: 4625
+Data Source: Windows Security Log
+MITRE ATT&CK: T1078 (Valid Accounts)
     </div>
 
-    <p>
-      Notice how Wazuh automatically maps the alert to <strong>MITRE ATT&CK</strong> techniques. This provides immediate context about what type of attack this behavior might indicate.
-    </p>
-
-    <h3>Alert Timeline Analysis</h3>
-
-    <p>
-      The security alerts timeline shows multiple failed authentication attempts occurring around 01:30 UTC:
-    </p>
-
+    <p><strong>Why This Matters for SOC Analysts:</strong></p>
     <ul>
-      <li>Feb 4, 2026 @ 01:32:06.797</li>
-      <li>Feb 4, 2026 @ 01:31:55.030</li>
-      <li>Feb 4, 2026 @ 01:31:43.180</li>
-      <li>Feb 4, 2026 @ 01:31:33.355</li>
-      <li>Feb 4, 2026 @ 01:31:23.681</li>
+      <li>Centralized visibility across all monitored systems</li>
+      <li>Real-time alerting on authentication failures</li>
+      <li>Pattern recognition for multiple failures</li>
+      <li>Integration with MITRE ATT&CK framework</li>
     </ul>
 
+    <img src="Screenshot_2026-02-03_040217.png" alt="Wazuh SIEM Dashboard">
+
+    <h2>Account Lockout Detection: Event ID 4740</h2>
+    
     <p>
-      Five failed attempts within approximately one minute. This pattern is important for correlation.
+      When multiple failed authentication attempts exceed the lockout threshold, Windows generates Event ID 4740 - indicating a potential brute force attack.
     </p>
 
-    <h2>Deep Dive: Event Details</h2>
+    <img src="Screenshot_2026-02-04_020600.png" alt="Event ID 4740 Account Lockout">
 
-    <p>
-      Clicking on one of the alerts in Wazuh reveals the full event details:
-    </p>
-
-    <img src="wazuh system message of failed logon.png" alt="Wazuh Event Detail - Failed Logon Information" style="max-width: 800px; width: 100%; height: auto; margin: 20px auto; display: block; border: 1px solid #ddd; border-radius: 4px;">
-
-    <h3>Event Breakdown</h3>
-
-    <p>
-      The detailed event message provides forensic-level information:
-    </p>
-
+    <h3>Event ID 4740 Analysis:</h3>
     <div class="code-box">
-      <strong>Message:</strong> "An account failed to log on."<br><br>
-
-      <strong>Subject:</strong><br>
-      &nbsp;&nbsp;Security ID: S-1-5-18<br>
-      &nbsp;&nbsp;Account Name: HR-PC01$<br>
-      &nbsp;&nbsp;Account Domain: THREATWATCH<br>
-      &nbsp;&nbsp;Logon ID: 0x3E7<br><br>
-
-      <strong>Logon Type:</strong> 2 (Interactive logon)<br><br>
-
-      <strong>Account For Which Logon Failed:</strong><br>
-      &nbsp;&nbsp;Security ID: S-1-0-0<br>
-      &nbsp;&nbsp;Account Name: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6e061c40040a010b2e1a061c0b0f1a190f1a0d064002010d0f02">[email&#160;protected]</a><br>
-      &nbsp;&nbsp;Account Domain: -<br><br>
-
-      <strong>Failure Information:</strong><br>
-      &nbsp;&nbsp;Failure Reason: Unknown user name or bad password<br>
-      &nbsp;&nbsp;Status: 0xC000006D<br>
-      &nbsp;&nbsp;Sub Status: 0xC000006A<br><br>
-
-      <strong>Process Information:</strong><br>
-      &nbsp;&nbsp;Caller Process ID: 0x670<br>
-      &nbsp;&nbsp;Caller Process Name: C:\Windows\System32\svchost.exe<br><br>
-
-      <strong>Network Information:</strong><br>
-      &nbsp;&nbsp;Workstation Name: HR-PC01<br>
-      &nbsp;&nbsp;Source Network Address: 127.0.0.1<br>
-      &nbsp;&nbsp;Source Port: 0<br><br>
-
-      <strong>Detailed Authentication Information:</strong><br>
-      &nbsp;&nbsp;Logon Process: User32<br>
-      &nbsp;&nbsp;Authentication Package: Negotiate<br>
+Event ID: 4740
+Description: "A user account was locked out"
+Target Account: [Username]
+Caller Computer: [Source that caused lockout]
+Timestamp: When lockout occurred
     </div>
 
-    <h3>Key Observations</h3>
-
-    <p>
-      From this event, we can determine:
-    </p>
-
-    <ul>
-      <li><strong>Who:</strong> User account "<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="3a524814505e555f7a4e52485f5b4e4d5b4e5952145655595b56">[email&#160;protected]</a>" attempted to authenticate</li>
-      <li><strong>What:</strong> The login attempt failed due to bad credentials</li>
-      <li><strong>Where:</strong> The attempt was made locally on HR-PC01 (127.0.0.1)</li>
-      <li><strong>When:</strong> February 4, 2026, multiple times within one minute</li>
-      <li><strong>How:</strong> Interactive logon (Logon Type 2) - someone physically at the machine</li>
-      <li><strong>Why it failed:</strong> Status code 0xC000006A indicates "bad password"</li>
-    </ul>
-
-    <div class="info-box">
-      <strong>Status Code Reference:</strong><br>
-      - 0xC000006A = User logged on with misspelled or bad password<br>
-      - 0xC000006D = Bad username or authentication information<br>
-      - 0xC0000064 = User account does not exist<br>
-      - 0xC0000234 = User account locked out
+    <div class="critical-box">
+      <strong>Critical Alert:</strong> Event ID 4740 indicates defensive controls activated after multiple failed attempts. This requires immediate SOC investigation to determine if attack is ongoing or if account owner needs assistance.
     </div>
 
-    <h2>SOC Level 1 Investigation Workflow</h2>
+    <img src="Screenshot_2026-02-04_020617.png" alt="Account Lockout Event Details">
 
-    <p>
-      As a SOC L1 analyst, here's how I would investigate this alert in a real environment:
-    </p>
+    <h2>SOC L1 Investigation Workflow</h2>
 
-    <h3>Step 1: Initial Triage</h3>
-
+    <h3>Step 1: Initial Alert Review</h3>
     <ul>
-      <li>Confirm the alert is not a false positive</li>
-      <li>Identify the affected account: <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="49213b67232d262c093d213b2c283d3e283d2a216725262a2825">[email&#160;protected]</a></strong></li>
-      <li>Identify the affected system: <strong>HR-PC01 (192.168.10.128)</strong></li>
-      <li>Note the timestamp and frequency of failed attempts</li>
+      <li>✅ Alert received: Wazuh Rule 60122 (Failed logon)</li>
+      <li>✅ Severity assessment: Level 5 (Medium)</li>
+      <li>✅ Event source: Domain Controller (DC01)</li>
+      <li>✅ Event ID: 4625</li>
     </ul>
 
-    <h3>Step 2: Context Gathering</h3>
-
+    <h3>Step 2: Evidence Gathering</h3>
     <ul>
-      <li>Is this user account active and legitimate?</li>
-      <li>Is the user known to be traveling or working remotely?</li>
-      <li>Have there been similar alerts for this user recently?</li>
-      <li>Is HR-PC01 the user's assigned workstation?</li>
+      <li>✅ Identified target account: testuser</li>
+      <li>✅ Source IP address: [Extracted from event]</li>
+      <li>✅ Failure reason: Bad password</li>
+      <li>✅ Timeline: When attempts occurred</li>
     </ul>
+
+    <img src="Screenshot_2026-02-04_020625.png" alt="Investigation Timeline">
 
     <h3>Step 3: Pattern Analysis</h3>
-
+    <p><strong>Questions to answer:</strong></p>
     <ul>
       <li>How many failed attempts occurred?</li>
-      <li>What is the time interval between attempts?</li>
-      <li>Are the attempts coming from the same source?</li>
-      <li>Are multiple accounts being targeted from the same source?</li>
+      <li>Were attempts from single source or multiple sources?</li>
+      <li>Is this normal user behavior or potential attack?</li>
+      <li>Did attempts trigger account lockout?</li>
     </ul>
 
-    <h3>Step 4: Determine Severity</h3>
+    <h3>Step 4: MITRE ATT&CK Mapping</h3>
+    <table>
+      <tr>
+        <th>Technique</th>
+        <th>ID</th>
+        <th>Evidence</th>
+      </tr>
+      <tr>
+        <td>Valid Accounts</td>
+        <td>T1078</td>
+        <td>Failed authentication attempts</td>
+      </tr>
+      <tr>
+        <td>Account Access Removal</td>
+        <td>T1531</td>
+        <td>Account lockout triggered</td>
+      </tr>
+    </table>
 
-    <p>
-      Based on the investigation, I would classify this as:
-    </p>
+    <img src="Screenshot_2026-02-04_021435.png" alt="MITRE ATT&CK Mapping">
 
-    <div class="code-box">
-      <strong>Severity:</strong> Low to Medium<br>
-      <strong>Reason:</strong> Localized failed authentication (127.0.0.1 = local login)<br>
-      <strong>Likely Scenario:</strong> User forgot password or mistyped credentials<br>
-      <strong>Action Required:</strong> Monitor for continued failures; escalate if account locks
-    </div>
-
-    <h3>Step 5: Response Actions</h3>
-
-    <p>
-      For this specific scenario:
-    </p>
-
-    <ul>
-      <li>✅ Document the event in the incident tracking system</li>
-      <li>✅ Create a watchlist for the user account</li>
-      <li>✅ Monitor for successful logins after failed attempts</li>
-      <li>✅ If failures continue, contact the user or reset the password</li>
-      <li>✅ Check for similar patterns across other endpoints</li>
-    </ul>
-
-    <h2>Account Lockout Scenario</h2>
-
-    <p>
-      In a real enterprise environment, Active Directory is typically configured with account lockout policies. After a certain number of failed attempts (often 5-10), the account is automatically locked.
-    </p>
-
-    <h3>Why Account Lockouts Matter</h3>
-
-    <p>
-      Account lockouts serve two purposes:
-    </p>
-
-    <ul>
-      <li><strong>Security:</strong> Prevents brute force attacks by limiting authentication attempts</li>
-      <li><strong>Detection:</strong> Generates additional alerts when an account is locked</li>
-    </ul>
-
-    <p>
-      However, account lockouts also create operational challenges:
-    </p>
-
-    <ul>
-      <li>Legitimate users get locked out and can't work</li>
-      <li>Helpdesk receives increased ticket volume</li>
-      <li>Attackers may intentionally lock accounts to cause disruption</li>
-    </ul>
-
-    <div class="alert-box">
-      <strong>Helpdesk Integration:</strong> This is where SOC and Helpdesk collaboration is critical. A locked account might be a security incident or just a user who needs their password reset. Understanding the context helps both teams respond appropriately.
-    </div>
-
-    <h2>Lessons Learned - SOC Analyst Perspective</h2>
-
-    <p>
-      This exercise reinforced several important SOC analyst skills:
-    </p>
-
-    <h3>1. Log Correlation is Essential</h3>
-
-    <p>
-      Seeing failed login events in a centralized SIEM provides much better visibility than checking individual Windows Event Logs on each endpoint. Wazuh allowed me to see the pattern across multiple events instantly.
-    </p>
-
-    <h3>2. Context Determines Severity</h3>
-
-    <p>
-      Five failed logins in one minute from 127.0.0.1 (local system) is very different from five failed logins in one minute from an external IP in a foreign country. Always consider the full context.
-    </p>
-
-    <h3>3. MITRE ATT&CK Mapping is Valuable</h3>
-
-    <p>
-      Wazuh's automatic mapping to MITRE ATT&CK techniques (T1078, T1531) immediately tells me what type of attack this behavior might indicate, even without deep forensic analysis.
-    </p>
-
-    <h3>4. Status Codes Matter</h3>
-
-    <p>
-      Understanding Windows status codes (0xC000006A vs 0xC0000064 vs 0xC0000234) helps differentiate between bad passwords, non-existent accounts, and locked accounts. Each requires a different response.
-    </p>
-
-    <h2>Lessons Learned - Helpdesk Perspective</h2>
-
-    <p>
-      Interestingly, this exercise also highlighted Helpdesk-relevant skills:
-    </p>
-
-    <h3>1. Password Reset Best Practices</h3>
-
-    <p>
-      When a user calls saying "I can't log in," the Helpdesk needs to verify:
-    </p>
-
-    <ul>
-      <li>Is the account locked? (Event ID 4740)</li>
-      <li>Is the password expired? (Event ID 4723)</li>
-      <li>Is Caps Lock on? (seriously, it happens)</li>
-      <li>Is the user typing the correct username?</li>
-    </ul>
-
-    <h3>2. When to Escalate to SOC</h3>
-
-    <p>
-      If a Helpdesk analyst sees multiple lockouts across different accounts or unusual failure patterns, it should be escalated to the SOC for investigation. This could indicate an attack.
-    </p>
-
-    <h3>3. Documentation is Critical</h3>
-
-    <p>
-      Every password reset, account unlock, and authentication-related ticket should be logged. This creates an audit trail that can be correlated with security events later.
-    </p>
-
-    <h2>Key Takeaways</h2>
-
-    <p>
-      This lab exercise demonstrated a complete SOC investigation workflow:
-    </p>
-
-    <ul>
-      <li><strong>Detection:</strong> Wazuh SIEM detected failed authentication attempts in real-time</li>
-      <li><strong>Analysis:</strong> Event details provided complete forensic context</li>
-      <li><strong>Investigation:</strong> SOC L1 workflow guided proper triage and response</li>
-      <li><strong>Documentation:</strong> Events were logged, correlated, and mapped to MITRE ATT&CK</li>
-      <li><strong>Response:</strong> Appropriate actions determined based on context and severity</li>
-    </ul>
-
+    <h3>Step 5: Classification & Response</h3>
     <div class="info-box">
-      <strong>Real-World Application:</strong> This exact scenario happens hundreds of times per day in enterprise SOCs. The ability to quickly triage authentication alerts, distinguish between normal and malicious behavior, and respond appropriately is a core SOC analyst skill.
+      <strong>L1 Analyst Decision:</strong><br>
+      • Classification: Potential credential access attempt<br>
+      • Severity: Medium (no successful compromise detected)<br>
+      • Response: Monitor for continued attempts<br>
+      • Escalation: Escalate to L2 if pattern continues<br>
+      • User notification: Contact account owner to verify activity
     </div>
 
-    <h2>Next Steps</h2>
+    <h2>Detection Patterns for SOC Analysts</h2>
 
-    <p>
-      Future expansions of this lab will include:
-    </p>
-
+    <h3>Normal User Behavior:</h3>
     <ul>
-      <li><strong>Brute Force Simulation:</strong> Automated credential attacks from external sources</li>
-      <li><strong>Credential Stuffing:</strong> Testing stolen credentials across multiple accounts</li>
-      <li><strong>Kerberoasting:</strong> Detecting Kerberos ticket abuse</li>
-      <li><strong>Pass-the-Hash:</strong> Lateral movement with stolen NTLM hashes</li>
-      <li><strong>Account Lockout Policy Testing:</strong> Fine-tuning lockout thresholds</li>
-      <li><strong>Automated Response:</strong> Creating playbooks to automatically respond to authentication attacks</li>
+      <li>1-2 failed attempts followed by success</li>
+      <li>Attempts from known IP addresses</li>
+      <li>Consistent timing (during business hours)</li>
+      <li>User reports forgotten password</li>
     </ul>
 
-    <h2>Final Thoughts</h2>
+    <h3>Suspicious Indicators:</h3>
+    <ul>
+      <li>Multiple rapid failed attempts</li>
+      <li>Attempts from unusual IP addresses</li>
+      <li>Off-hours authentication attempts</li>
+      <li>Multiple accounts targeted from same source</li>
+      <li>Account lockout triggered</li>
+    </ul>
 
+    <h2>Skills & Knowledge Gained</h2>
+
+    <h3>Windows Security Logging</h3>
+    <ul>
+      <li>Deep understanding of Event IDs 4625 and 4740</li>
+      <li>Event log forensics and analysis</li>
+      <li>Logon types and authentication methods</li>
+      <li>Windows Security event interpretation</li>
+    </ul>
+
+    <h3>SIEM Operations</h3>
+    <ul>
+      <li>Wazuh rule configuration and tuning</li>
+      <li>Alert triage and prioritization</li>
+      <li>Log correlation across multiple systems</li>
+      <li>Dashboard creation and monitoring</li>
+    </ul>
+
+    <h3>Threat Detection</h3>
+    <ul>
+      <li>Authentication attack pattern recognition</li>
+      <li>MITRE ATT&CK framework application</li>
+      <li>Behavioral analysis - normal vs. malicious</li>
+      <li>Evidence-based decision making</li>
+    </ul>
+
+    <h3>SOC L1 Competencies</h3>
+    <ul>
+      <li>Alert investigation workflow execution</li>
+      <li>Documentation and evidence preservation</li>
+      <li>Severity classification criteria</li>
+      <li>When to escalate to L2</li>
+    </ul>
+
+    <h2>Real-World Application</h2>
+    
     <p>
-      Authentication monitoring is one of the most important functions a SOC performs. While this was a simple failed login scenario, the investigation process is the same whether it's a user who forgot their password or an APT group attempting to breach your network.
+      This investigation demonstrates the core workflow SOC L1 analysts perform hundreds of times daily:
     </p>
+    <ol>
+      <li>Alert notification arrives</li>
+      <li>Analyst reviews SIEM alert details</li>
+      <li>Gathers context from event logs</li>
+      <li>Analyzes pattern (normal user vs. attack)</li>
+      <li>Classifies severity and determines response</li>
+      <li>Documents findings and escalates if needed</li>
+    </ol>
 
+    <div class="success-box">
+      <strong>Career Readiness:</strong> This exercise proves I can execute fundamental SOC analyst workflows - alert triage, event log analysis, MITRE ATT&CK mapping, and proper documentation - making me immediately productive in a SOC L1 role.
+    </div>
+
+    <h2>Next Steps in My Lab</h2>
     <p>
-      The key is building the muscle memory to properly analyze events
+      This authentication monitoring foundation enabled more advanced labs:
+    </p>
+    <ul>
+      <li>✅ Sysmon deployment for endpoint visibility</li>
+      <li>✅ Brute force attack simulation</li>
+      <li>✅ Password spraying detection</li>
+      <li>✅ Advanced correlation techniques</li>
+    </ul>
+
+  </main>
+
+</body>
+</html>
