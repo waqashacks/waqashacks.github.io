@@ -143,7 +143,7 @@
       Downloaded Sysmon v15.15 from Microsoft Sysinternals and extracted to dedicated folder.
     </p>
 
-    <img src="Sysmon_Extracted.png" alt="Sysmon Files Extracted">
+    <img src="Sysmon Extracted.png" alt="Sysmon Files Extracted">
 
     <div class="code-box">
 Download URL: https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon
@@ -156,7 +156,7 @@ Extraction Path: C:\Users\Administrator\Downloads\Sysmon\
       Implemented industry-standard Sysmon configuration from SwiftOnSecurity GitHub repository for comprehensive threat detection.
     </p>
 
-    <img src="sysmon_config_in_sysmon_folder.png" alt="Sysmon Configuration File">
+    <img src="sysmon config in sysmon folder.png" alt="Sysmon Configuration File">
 
     <div class="code-box">
 Config File: sysmonconfig-export.xml
@@ -186,7 +186,7 @@ Sysmon64.exe -accepteula -i sysmonconfig-export.xml
       <li><code>sysmonconfig-export.xml</code> - SwiftOnSecurity configuration</li>
     </ul>
 
-    <img src="Successfully_installed_sysmon_output.png" alt="Sysmon Installation Success">
+    <img src="Successfully installed sysmon output.png" alt="Sysmon Installation Success">
 
     <div class="success-box">
       <strong>Installation Success:</strong> Sysmon installed successfully and running as Windows service with advanced logging configuration.
@@ -205,7 +205,7 @@ SERVICE_NAME: sysmon64
 STATE: 4 RUNNING
     </div>
 
-    <img src="sysmon_service_running.png" alt="Sysmon Service Running">
+    <img src="sysmon service running.png" alt="Sysmon Service Running">
 
     <div class="info-box">
       <strong>Service Validation:</strong> STATE: 4 RUNNING confirms Sysmon driver is loaded and actively monitoring endpoint activity.
@@ -229,7 +229,7 @@ Applications and Services Logs → Microsoft → Windows → Sysmon → Operatio
       Event ID 1 is the most valuable Sysmon event for threat detection - it captures every process created on the endpoint with full details.
     </p>
 
-    <img src="sysmon_event_ID_1_Details.png" alt="Sysmon Event ID 1 Process Creation">
+    <img src="sysmon event ID 1 Details.png" alt="Sysmon Event ID 1 Process Creation">
 
     <h3>Critical Fields for Analysis:</h3>
     <table>
@@ -283,7 +283,7 @@ powershell -nop -w hidden -encodedcommand [Base64String]
       <li><code>-encodedcommand</code> - Obfuscated payload in Base64</li>
     </ul>
 
-    <img src="Powershell_execution_1.png" alt="PowerShell Suspicious Execution Detection">
+    <img src="Powershell execution 1.png" alt="PowerShell Suspicious Execution Detection">
 
     <div class="alert-box">
       <strong>Red Flag:</strong> PowerShell with hidden window + no profile + encoded command is a classic indicator of malicious activity. Legitimate scripts rarely combine all three flags.
@@ -295,7 +295,7 @@ powershell -nop -w hidden -encodedcommand [Base64String]
       Sysmon events forwarded to Wazuh SIEM triggered multiple high-severity alerts.
     </p>
 
-    <img src="Powershell_execution_2.png" alt="Wazuh Alerts for PowerShell Execution">
+    <img src="Powershell execution 2.png" alt="Wazuh Alerts for PowerShell Execution">
 
     <h3>Wazuh Alerts Generated:</h3>
     <table>
