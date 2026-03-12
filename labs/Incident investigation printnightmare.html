@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOC Incident Investigation: PrintNightmare Exploitation | Waqas Ibrahim</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; line-height: 1.6; color: #2d3748; background: #f8f9fa; }
+    nav { background: #1a202c; color: white; padding: 1rem 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    nav .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+    nav .logo { font-size: 1.5em; font-weight: 700; }
+    nav .logo a, nav a { color: white; text-decoration: none; font-weight: 500; transition: color 0.2s; }
+    nav a:hover { color: #667eea; }
+    nav ul { display: flex; list-style: none; gap: 30px; }
+    .blog-header { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 60px 20px; text-align: center; }
+    .blog-header h1 { font-size: 2.5em; margin-bottom: 15px; font-weight: 700; }
+    .blog-header .meta { font-size: 1.1em; opacity: 0.9; margin-bottom: 10px; }
+    .blog-header .mitre { background: rgba(255,255,255,0.2); display: inline-block; padding: 8px 20px; border-radius: 20px; margin-top: 10px; font-family: monospace; font-size: 0.95em; }
+    .skills-highlight { background: white; max-width: 1200px; margin: -40px auto 40px; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); position: relative; z-index: 10; }
+    .skills-highlight h2 { color: #e74c3c; margin-bottom: 25px; font-size: 1.8em; text-align: center; }
+    .skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+    .skill-box { background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #e74c3c; }
+    .skill-box h3 { color: #2d3748; margin-bottom: 12px; font-size: 1.2em; }
+    .skill-box ul { list-style: none; padding: 0; }
+    .skill-box li { padding: 6px 0; color: #4a5568; font-size: 0.95em; }
+    .skill-box li:before { content: "✓ "; color: #28a745; font-weight: bold; margin-right: 8px; }
+    .content { max-width: 900px; margin: 0 auto 60px; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .content h2 { font-size: 1.8em; margin: 40px 0 15px; color: #1a202c; font-weight: 700; }
+    .content h3 { font-size: 1.4em; margin: 25px 0 12px; color: #2d3748; font-weight: 600; }
+    .content p { margin-bottom: 15px; color: #4a5568; line-height: 1.8; }
+    .content ul, .content ol { margin: 20px 0; padding-left: 30px; color: #4a5568; }
+    .content li { margin-bottom: 10px; line-height: 1.7; }
+    .content img { max-width: 100%; height: auto; margin: 20px auto; display: block; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .content table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .content th, .content td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    .content th { background: #f8f9fa; font-weight: 600; color: #2d3748; }
+    .alert-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px 20px; margin: 20px 0; border-radius: 4px; color: #856404; }
+    .critical-box { background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px 20px; margin: 20px 0; border-radius: 4px; color: #721c24; }
+    .success-box { background: #d4edda; border-left: 4px solid #28a745; padding: 15px 20px; margin: 20px 0; border-radius: 4px; color: #155724; }
+    .code-box { background: #f6f8fa; border: 1px solid #d1d5da; padding: 15px; margin: 15px 0; border-radius: 4px; font-family: 'Courier New', monospace; overflow-x: auto; color: #24292e; font-size: 0.9em; }
+    .info-box { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px 20px; margin: 20px 0; border-radius: 4px; color: #0c5460; }
+    .timeline { border-left: 4px solid #e74c3c; padding-left: 30px; margin: 30px 0; }
+    .timeline-item { margin-bottom: 30px; position: relative; }
+    .timeline-item::before { content: "●"; position: absolute; left: -38px; top: 0; color: #e74c3c; font-size: 1.5em; }
+    .timeline-item .time { color: #e74c3c; font-weight: 700; font-size: 1.1em; margin-bottom: 5px; }
+    .timeline-item .event { font-weight: 600; color: #2d3748; margin-bottom: 5px; }
+    .timeline-item .detail { color: #4a5568; font-size: 0.95em; }
+    .investigation-step { background: #f8f9fa; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 6px; }
+    .investigation-step h4 { color: #667eea; margin-bottom: 10px; font-size: 1.2em; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <div class="logo"><a href="../index.html">Waqas Ibrahim</a></div>
+      <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../index.html#projects">SOC Labs</a></li>
+        <li><a href="../index.html#about">About</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="blog-header">
+    <h1>SOC Incident Investigation: PrintNightmare to Full Compromise</h1>
+    <div class="meta">Real-World Incident Response | Timeline Reconstruction | Multi-Stage Attack Analysis</div>
+    <div class="mitre">CVE-2021-34527 | T1574.010 | T1562.001 | T1003.002 | T1021.002</div>
+  </div>
+
+  <div class="skills-highlight">
+    <h2>🎯 SOC L2 Analyst Skills Demonstrated</h2>
+    <div class="skills-grid">
+      <div class="skill-box">
+        <h3>Incident Investigation</h3>
+        <ul>
+          <li>Multi-source log correlation (Sysmon + Windows Security)</li>
+          <li>Attack timeline reconstruction</li>
+          <li>Root cause identification</li>
+          <li>Incident severity classification</li>
+        </ul>
+      </div>
+      <div class="skill-box">
+        <h3>Threat Analysis</h3>
+        <ul>
+          <li>CVE-2021-34527 (PrintNightmare) forensics</li>
+          <li>Living-off-the-land binary detection</li>
+          <li>Malware persistence mechanism analysis</li>
+          <li>Command & control pattern recognition</li>
+        </ul>
+      </div>
+      <div class="skill-box">
+        <h3>SIEM Operations</h3>
+        <ul>
+          <li>Wazuh alert correlation across 7 event types</li>
+          <li>Critical alert prioritization</li>
+          <li>MITRE ATT&CK framework mapping</li>
+          <li>Evidence chain documentation</li>
+        </ul>
+      </div>
+      <div class="skill-box">
+        <h3>Incident Response</h3>
+        <ul>
+          <li>Containment strategy execution</li>
+          <li>Lateral movement detection</li>
+          <li>Network-wide threat hunting</li>
+          <li>Remediation planning</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <main class="content">
+    
+    <h2>Executive Summary</h2>
+    <p>
+      <strong>What I Did:</strong> Conducted complete SOC L2 incident investigation of HR-PC01 compromise, correlating 7 distinct Wazuh alerts to reconstruct a multi-stage attack from initial PrintNightmare exploitation through credential dumping. Identified root cause, attack timeline, and lateral movement indicators.
+    </p>
+    <p>
+      <strong>Why It Matters:</strong> Real SOC analysts don't just acknowledge alerts - they investigate, correlate, and reconstruct complete attack stories. This investigation demonstrates the analytical thinking, tool proficiency, and systematic approach required for L2 SOC incident response.
+    </p>
+    <p>
+      <strong>Result:</strong> Successfully reconstructed 18-minute attack chain across 7 MITRE techniques, identified PrintNightmare (CVE-2021-34527) as initial access vector, detected credential dumping preparation, and provided comprehensive remediation recommendations.
+    </p>
+
+    <h2>Initial Alert: The Starting Point</h2>
+
+    <p>
+      As a SOC L2 analyst, I began my shift reviewing the overnight alert queue. A cluster of high-severity alerts from HR-PC01 (192.168.10.128) caught my attention:
+    </p>
+
+    <table>
+      <tr>
+        <th>Time</th>
+        <th>Alert</th>
+        <th>Level</th>
+        <th>Rule ID</th>
+      </tr>
+      <tr>
+        <td>06:22:58 UTC</td>
+        <td>Malicious service creation (hjRh)</td>
+        <td>3</td>
+        <td>92307</td>
+      </tr>
+      <tr>
+        <td>06:23:17 UTC</td>
+        <td>Defender real-time monitoring disabled</td>
+        <td style="background: #ffe5e5;">12</td>
+        <td>92008</td>
+      </tr>
+      <tr>
+        <td>06:23:34 UTC</td>
+        <td>Defender behavior monitoring disabled</td>
+        <td>3</td>
+        <td>92007</td>
+      </tr>
+      <tr>
+        <td>06:24:57 UTC</td>
+        <td>LSA protection disabled</td>
+        <td>10</td>
+        <td>92041</td>
+      </tr>
+    </table>
+
+    <div class="critical-box">
+      <strong>Initial Assessment:</strong> Multiple Level 10-12 alerts from single endpoint within 2 minutes. Pattern indicates automated post-exploitation activity. Severity: CRITICAL. Escalate to incident response.
+    </div>
+
+    <h2>Investigation Step 1: Alert Correlation</h2>
+
+    <div class="investigation-step">
+      <h4>Question: Are these alerts related or coincidental?</h4>
+      <p><strong>Method:</strong> Check common fields across all alerts</p>
+      <ul>
+        <li>✅ Same agent: HR-PC01 (Agent ID 006)</li>
+        <li>✅ Same user context: NT AUTHORITY\SYSTEM</li>
+        <li>✅ Same parent process: cmd.exe (PID 668)</li>
+        <li>✅ Tight time clustering: All within 2-minute window</li>
+      </ul>
+      <p><strong>Conclusion:</strong> These are NOT independent events. Single attacker-controlled SYSTEM shell orchestrating coordinated attack.</p>
+    </div>
+
+    <h2>Alert Analysis: Working Backwards</h2>
+
+    <h3>Alert #1: LSA Protection Disabled (Rule 92041)</h3>
+
+    <div class="code-box">
+Time: 05:32:27 UTC
+Command: reg add HKLM\SYSTEM\CurrentControlSet\Control\Lsa 
+         /v LsaCfgFlags /t REG_DWORD /d 0 /f
+User: NT AUTHORITY\SYSTEM
+Parent: cmd.exe (PID 668)
+MITRE: T1112 (Modify Registry)
+Tactic: Defense Evasion
+    </div>
+
+    <p><strong>What This Means:</strong></p>
+    <ul>
+      <li>LSA Protection (RunAsPPL) prevents credential dumping tools from accessing LSASS memory</li>
+      <li>Setting LsaCfgFlags to 0 disables this protection</li>
+      <li>This is PRE-ATTACK preparation - attacker is about to dump credentials</li>
+      <li>Rule fired 8 times - repeated attempts or multiple targets</li>
+    </ul>
+
+    <div class="critical-box">
+      <strong>Red Flag:</strong> LSA protection disable is textbook pre-credential-dumping behavior. Expect Mimikatz, Secretsdump, or similar tool usage imminent.
+    </div>
+
+    <img src="19.png" alt="Wazuh SIEM Alert - Registry modification with Base64-like pattern (Rule 92041)" style="border: 2px solid #e74c3c;">
+    <p style="text-align: center; color: #6c757d; font-size: 0.9em; margin-top: -10px;">
+      <em>Wazuh Alert: Base64-like registry value pattern detected - MITRE T1027 (Obfuscated Files) + T1112 (Modify Registry)</em>
+    </p>
+
+    <h3>Alert #2: Defender Behavior Monitoring Disabled (Rule 92007)</h3>
+
+    <div class="code-box">
+Time: 05:31:05 UTC
+Command: powershell Set-MpPreference -DisableBehaviorMonitoring $true
+User: NT AUTHORITY\SYSTEM
+Parent: cmd.exe (PID 668)
+MITRE: T1562 (Impair Defenses)
+Tactic: Defense Evasion
+    </div>
+
+    <p><strong>What This Means:</strong></p>
+    <ul>
+      <li>Disables Windows Defender heuristic/behavioral detection</li>
+      <li>Allows in-memory attacks, fileless malware execution</li>
+      <li>Second layer of defense stripped (after real-time monitoring)</li>
+      <li>17 seconds after previous Defender disable - scripted sequence</li>
+    </ul>
+
+    <img src="20.png" alt="Wazuh SIEM Alert - Defender behavior monitoring tampering (Rule 92007)" style="border: 2px solid #ffc107;">
+    <p style="text-align: center; color: #6c757d; font-size: 0.9em; margin-top: -10px;">
+      <em>Wazuh Alert: Windows Defender configuration tampering detected via PowerShell - MITRE T1562 (Impair Defenses)</em>
+    </p>
+
+    <h3>Alert #3: Defender Real-Time Monitoring Disabled (Rule 92008)</h3>
+
+    <div class="code-box">
+Time: 05:30:48 UTC
+Command: powershell Set-MpPreference -DisableRealtimeMonitoring $true
+User: NT AUTHORITY\SYSTEM
+Parent: cmd.exe (PID 668)  
+MITRE: T1562.001 (Disable or Modify Tools)
+Tactic: Defense Evasion
+Level: 12 (CRITICAL - Email triggered)
+    </div>
+
+    <p><strong>What This Means:</strong></p>
+    <ul>
+      <li>Completely blinds Windows Defender - no real-time file scanning</li>
+      <li>First defense dismantling action</li>
+      <li>SysWOW64 PowerShell (32-bit) - attacker evasion tactic</li>
+      <li>Same parent PID across all PowerShell executions</li>
+    </ul>
+
+    <img src="21.png" alt="Wazuh SIEM Alert - Defender real-time monitoring disabled (Rule 92008)" style="border: 2px solid #dc3545;">
+    <p style="text-align: center; color: #6c757d; font-size: 0.9em; margin-top: -10px;">
+      <em>Wazuh Alert Level 12 (CRITICAL): Windows Defender real-time monitoring disabled - MITRE T1562.001 (Disable or Modify Tools)</em>
+    </p>
+
+    <h2>Investigation Step 2: Timeline Reconstruction</h2>
+
+    <p>
+      At this point, I had detected the "what" (defense evasion), but not the "how" (initial access). I expanded my search to include ALL Sysmon events from HR-PC01 around the same timeframe.
+    </p>
+
+    <div class="investigation-step">
+      <h4>SIEM Query Executed:</h4>
+      <div class="code-box">
+agent.name: "HR-PC01" AND 
+@timestamp: [2026-03-11T05:00:00 TO 2026-03-11T06:00:00] AND
+(data.win.system.eventID: 1 OR 
+ data.win.system.eventID: 11 OR 
+ data.win.system.eventID: 13 OR
+ data.win.system.eventID: 7045)
+ORDER BY @timestamp ASC
+      </div>
+    </div>
+
+    <p>This query returned two critical earlier events:</p>
+
+    <h3>Alert #4: Malicious Service Created (Rule 92307)</h3>
+
+    <div class="code-box">
+Time: 05:30:29 UTC (19 seconds BEFORE Defender disable)
+Event: Sysmon Event ID 13 (Registry Value Set)
+Target: HKLM\System\CurrentControlSet\Services\hjRh\ImagePath
+Value: %systemroot%\GzgBIwUb.exe
+Process: services.exe (PID 788)
+MITRE: T1543.003 (Windows Service)
+Tactic: Persistence, Privilege Escalation
+Fired: 53 times
+    </div>
+
+    <p><strong>Critical Findings:</strong></p>
+    <ul>
+      <li>Random service name "hjRh" - evasion technique</li>
+      <li>Random binary name "GzgBIwUb.exe" - not legitimate Windows file</li>
+      <li>Fired 53 times - this malware has been active for extended period</li>
+      <li>Service set to "Demand Start" + "LocalSystem" privilege</li>
+    </ul>
+
+    <div class="alert-box">
+      <strong>Investigation Pivot:</strong> If a service was created, when was the binary dropped? Searched for Sysmon Event ID 11 (File Create) for GzgBIwUb.exe
+    </div>
+
+    <img src="22.png" alt="Wazuh SIEM Alert - Pass-the-hash attack detected (Rule 92652)" style="border: 2px solid #dc3545;">
+    <p style="text-align: center; color: #6c757d; font-size: 0.9em; margin-top: -10px;">
+      <em>Wazuh Alert Level 6: Successful remote logon with NTLM authentication - possible pass-the-hash attack - MITRE T1550.002</em>
+    </p>
+
+    <h3>Alert #5: Malicious Binary Dropped via SMB (Rule 92218)</h3>
+
+    <div class="code-box">
+Time: 05:30:28 UTC (1 second BEFORE service creation)
+Event: Sysmon Event ID 11 (File Created)
+File: C:\Windows\GzgBIwUb.exe
+Process: System (PID 4)
+MITRE: T1570 (Lateral Tool Transfer)
+Tactic: Lateral Movement
+Level: 6
+    </div>
+
+    <p><strong>The Smoking Gun:</strong></p>
+    <ul>
+      <li>PID 4 (Windows System kernel process) created the file</li>
+      <li>This ONLY happens when files are written over SMB admin shares (C$)</li>
+      <li>Lateral movement from another compromised machine</li>
+      <li>33 milliseconds between file drop and service creation = fully automated</li>
+    </ul>
+
+    <div class="critical-box">
+      <strong>Major Revelation:</strong> HR-PC01 is NOT patient zero. The attacker already controlled another machine and used it to push malware via SMB admin shares. This is a NETWORK-WIDE compromise.
+    </div>
+
+    <img src="23.png" alt="Wazuh SIEM Alert - Windows admin share abuse (Rule 92218)" style="border: 2px solid #dc3545;">
+    <p style="text-align: center; color: #6c757d; font-size: 0.9em; margin-top: -10px;">
+      <em>Wazuh Alert Level 6: Binary dropped in Windows root folder via admin shares - MITRE T1570 (Lateral Tool Transfer)</em>
+    </p>
+
+    <h3>Alert #6: Windows Service Installation (Rule 92650)</h3>
+
+    <div class="code-box">
+Time: 05:30:29.023 UTC
+Event: Windows Event ID 7045 (Service Installed)
+Service Name: hjRh
+Service Path: %systemroot%\GzgBIwUb.exe
+Account: LocalSystem
+Start Type: Demand Start
+MITRE: T1021.002 (SMB/Windows Admin Shares), T1569.002 (Service Execution)
+Level: 12 (Email triggered)
+    </div>
+
+    <p><strong>Why This Matters:</strong></p>
+    <ul>
+      <li>Independent confirmation from Windows Security log (not Sysmon)</li>
+      <li>Cannot be faked or hidden by malware</li>
+      <li>Fired 3 times across environment - multiple victims</li>
+      <li>"Demand Start" = attacker triggers remotely on-demand (active C2)</li>
+    </ul>
+
+    <img src="24.png" alt="Wazuh SIEM Alert - Malicious service creation (Rule 92650)" style="border: 2px solid #dc3545;">
+    <p style="text-align: center; color: #6c757d; font-size: 0.9em; margin-top: -10px;">
+      <em>Wazuh Alert Level 12 (CRITICAL): Windows service created from root path via admin shares - MITRE T1021.002 + T1569.002</em>
+    </p>
+
+    <h2>Investigation Step 3: Finding Patient Zero</h2>
+
+    <p>
+      I now knew the malware was pushed from another machine via SMB. The critical question: <strong>Which machine was the attack source?</strong>
+    </p>
+
+    <div class="investigation-step">
+      <h4>Hypothesis: Initial compromise happened earlier than 05:30</h4>
+      <p><strong>Method:</strong> Expand time range backwards, search for PrintNightmare indicators</p>
+      <p><strong>Why PrintNightmare:</strong> SMB lateral movement + SYSTEM privileges + automated tooling = likely PrintNightmare (CVE-2021-34527) exploitation</p>
+    </div>
+
+    <h3>Alert #7: PrintNightmare Exploitation (Rule 92206)</h3>
+
+    <div class="code-box">
+Time: 05:17:47 UTC (13 MINUTES before malware drop)
+Event: Sysmon Event ID 11 (File Created)
+File: C:\Windows\System32\spool\drivers\W32X86\3\New\PrintConfig.dll
+Process: spoolsv.exe (PID 2880) - Windows Print Spooler
+User: NT AUTHORITY\SYSTEM
+MITRE: T1574.010 (Services File Permissions Weakness)
+CVE: CVE-2021-34527 (PrintNightmare)
+Level: 12 (CRITICAL)
+Fired: 9 times
+    </div>
+
+    <p><strong>Root Cause Identified:</strong></p>
+    <ul>
+      <li>Print Spooler service dropped DLL in exact PrintNightmare staging path</li>
+      <li>This is INITIAL EXPLOITATION - how attacker got SYSTEM access</li>
+      <li>CVE-2021-34527 - critical RCE vulnerability (CVSS 8.8)</li>
+      <li>Exploited remotely via Print Spooler RPC (port 445/135)</li>
+      <li>12-minute gap before malware deployment = human operator reviewing access</li>
+    </ul>
+
+    <div class="success-box">
+      <strong>Investigation Complete:</strong> Full attack chain reconstructed from initial exploitation to post-exploitation.
+    </div>
+
+    <img src="25.png" alt="Wazuh SIEM Dashboard - Multiple service creation alerts (Rule 92307)" style="border: 2px solid #17a2b8;">
+    <p style="text-align: center; color: #6c757d; font-size: 0.9em; margin-top: -10px;">
+      <em>Wazuh Dashboard: Multiple persistence attempts via malicious service creation - MITRE T1543.003 (Windows Service)</em>
+    </p>
+
+    <img src="26.png" alt="Wazuh SIEM - PrintNightmare exploitation alerts (Rule 92206)" style="border: 2px solid #dc3545;">
+    <p style="text-align: center; color: #6c757d; font-size: 0.9em; margin-top: -10px;">
+      <em>Wazuh Alert Level 12 (CRITICAL): PrintNightmare (CVE-2021-34527) exploitation - Multiple DLL drops via Print Spooler - MITRE T1574.010</em>
+    </p>
+
+    <h2>Complete Attack Timeline</h2>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="time">05:17:47 UTC</div>
+        <div class="event">🔴 PrintNightmare Exploitation (CVE-2021-34527)</div>
+        <div class="detail">
+          • spoolsv.exe drops PrintConfig.dll<br>
+          • Attacker gains remote SYSTEM access<br>
+          • MITRE: T1574.010 (Initial Access)<br>
+          • Patient zero compromise
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="time">05:17:47 - 05:30:28</div>
+        <div class="event">⏱️ Reconnaissance & Preparation (12 minutes)</div>
+        <div class="detail">
+          • Human operator reviews access<br>
+          • Plans lateral movement<br>
+          • Prepares automated toolkit<br>
+          • Identifies targets for spread
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="time">05:30:28.990 UTC</div>
+        <div class="event">📁 Malware Binary Dropped via SMB</div>
+        <div class="detail">
+          • PID 4 (System) writes C:\Windows\GzgBIwUb.exe<br>
+          • Pushed from another compromised machine<br>
+          • MITRE: T1570 (Lateral Tool Transfer)<br>
+          • Network-wide spread begins
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="time">05:30:29.023 UTC</div>
+        <div class="event">⚙️ Malicious Service Installed</div>
+        <div class="detail">
+          • Service "hjRh" created (random name)<br>
+          • Points to GzgBIwUb.exe<br>
+          • LocalSystem privilege, Demand Start<br>
+          • MITRE: T1543.003 (Persistence)
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="time">05:30:48 UTC</div>
+        <div class="event">🛡️ Defender Real-Time Monitoring Disabled</div>
+        <div class="detail">
+          • PowerShell: -DisableRealtimeMonitoring $true<br>
+          • Blinds antivirus file scanning<br>
+          • MITRE: T1562.001 (Defense Evasion)<br>
+          • First defense layer stripped
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="time">05:31:05 UTC</div>
+        <div class="event">🛡️ Defender Behavior Monitoring Disabled</div>
+        <div class="detail">
+          • PowerShell: -DisableBehaviorMonitoring $true<br>
+          • Disables heuristic detection<br>
+          • MITRE: T1562 (Defense Evasion)<br>
+          • Second defense layer stripped
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="time">05:32:27 UTC</div>
+        <div class="event">🔓 LSA Protection Disabled</div>
+        <div class="detail">
+          • reg.exe: LsaCfgFlags set to 0<br>
+          • Removes credential dumping protection<br>
+          • MITRE: T1112 (Modify Registry)<br>
+          • Preparation for credential theft
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="time">05:32:27+ UTC</div>
+        <div class="event">⚠️ Expected Next: Credential Dumping</div>
+        <div class="detail">
+          • LSASS memory access likely<br>
+          • Mimikatz, Secretsdump, or similar<br>
+          • MITRE: T1003.001/002 (Credential Dumping)<br>
+          • Lateral movement to Domain Controller
+        </div>
+      </div>
+    </div>
+
+    <h2>MITRE ATT&CK Mapping</h2>
+
+    <table>
+      <tr>
+        <th>Stage</th>
+        <th>Technique</th>
+        <th>ID</th>
+        <th>Tactic</th>
+        <th>Evidence</th>
+      </tr>
+      <tr>
+        <td>Initial Access</td>
+        <td>Services File Permissions Weakness</td>
+        <td>T1574.010</td>
+        <td>Persistence, Privilege Escalation</td>
+        <td>PrintConfig.dll via spoolsv.exe</td>
+      </tr>
+      <tr>
+        <td>Lateral Movement</td>
+        <td>Lateral Tool Transfer</td>
+        <td>T1570</td>
+        <td>Lateral Movement</td>
+        <td>GzgBIwUb.exe via SMB admin share</td>
+      </tr>
+      <tr>
+        <td>Lateral Movement</td>
+        <td>SMB/Windows Admin Shares</td>
+        <td>T1021.002</td>
+        <td>Lateral Movement</td>
+        <td>PID 4 file write, C$ share usage</td>
+      </tr>
+      <tr>
+        <td>Persistence</td>
+        <td>Windows Service</td>
+        <td>T1543.003</td>
+        <td>Persistence, Privilege Escalation</td>
+        <td>Service hjRh creation</td>
+      </tr>
+      <tr>
+        <td>Execution</td>
+        <td>Service Execution</td>
+        <td>T1569.002</td>
+        <td>Execution</td>
+        <td>Event ID 7045</td>
+      </tr>
+      <tr>
+        <td>Defense Evasion</td>
+        <td>Disable or Modify Tools</td>
+        <td>T1562.001</td>
+        <td>Defense Evasion</td>
+        <td>Defender monitoring disabled</td>
+      </tr>
+      <tr>
+        <td>Defense Evasion</td>
+        <td>Impair Defenses</td>
+        <td>T1562</td>
+        <td>Defense Evasion</td>
+        <td>Multiple Defender features killed</td>
+      </tr>
+      <tr>
+        <td>Defense Evasion</td>
+        <td>Modify Registry</td>
+        <td>T1112</td>
+        <td>Defense Evasion</td>
+        <td>LSA protection disabled</td>
+      </tr>
+    </table>
+
+    <h2>Key Investigation Techniques Used</h2>
+
+    <h3>1. Alert Correlation</h3>
+    <ul>
+      <li>Identified common parent process across multiple alerts (PID 668)</li>
+      <li>Recognized tight time clustering (2-minute attack window)</li>
+      <li>Linked disparate alert types into single attack narrative</li>
+    </ul>
+
+    <h3>2. Timeline Reconstruction</h3>
+    <ul>
+      <li>Worked backwards from high-severity alerts</li>
+      <li>Expanded time window to find earlier indicators</li>
+      <li>Ordered events chronologically to reveal attack sequence</li>
+      <li>Identified 12-minute gap indicating human operator</li>
+    </ul>
+
+    <h3>3. Forensic Artifact Analysis</h3>
+    <ul>
+      <li>PID 4 file creation = SMB lateral movement</li>
+      <li>spoolsv.exe DLL drop in specific path = PrintNightmare</li>
+      <li>Random service/binary names = malware evasion</li>
+      <li>SysWOW64 PowerShell = attacker evasion tactic</li>
+    </ul>
+
+    <h3>4. Multi-Source Validation</h3>
+    <ul>
+      <li>Sysmon Event ID 13 + Windows Event ID 7045 = service creation confirmed</li>
+      <li>Sysmon Event ID 11 + Rule 92218 = file drop validated</li>
+      <li>Cross-referenced timestamps across independent log sources</li>
+    </ul>
+
+    <h2>Critical Findings</h2>
+
+    <div class="critical-box">
+      <h3>🔴 INCIDENT CLASSIFICATION: CRITICAL</h3>
+      <p><strong>Scope:</strong> Network-wide compromise</p>
+      <p><strong>Root Cause:</strong> Unpatched PrintNightmare vulnerability (CVE-2021-34527)</p>
+      <p><strong>Attacker Profile:</strong> Human-operated, skilled, using automated post-exploitation framework</p>
+      <p><strong>Confirmed Techniques:</strong> 8 MITRE ATT&CK techniques across 6 tactics</p>
+      <p><strong>Systems Affected:</strong> Minimum 3 endpoints (based on "fired 3 times")</p>
+      <p><strong>Credential Risk:</strong> HIGH - LSA protection disabled, credential dumping imminent/completed</p>
+      <p><strong>Lateral Movement:</strong> CONFIRMED - SMB admin share abuse detected</p>
+    </div>
+
+    <h2>Immediate Containment Actions</h2>
+
+    <h3>1. Isolate Affected Systems</h3>
+    <div class="code-box">
+# Emergency network isolation
+- Disconnect HR-PC01 from network (pull cable or disable switch port)
+- Identify and isolate other systems where Rule 92650 fired 3 times
+- Block SMB (445) between workstations at firewall
+    </div>
+
+    <h3>2. Disable Print Spooler Service</h3>
+    <div class="code-box">
+# On ALL systems in environment
+Stop-Service -Name Spooler -Force
+Set-Service -Name Spooler -StartupType Disabled
+    </div>
+
+    <h3>3. Hunt for Indicators of Compromise</h3>
+    <div class="code-box">
+# SIEM queries to run immediately:
+1. Search all agents for file: GzgBIwUb.exe
+2. Search all agents for service: hjRh  
+3. Search for Sysmon Event 11 in path: spool\drivers\W32X86\3\New\
+4. Search for LSA registry modification (LsaCfgFlags)
+5. Search for Defender disable commands
+    </div>
+
+    <h3>4. Identify Patient Zero SMB Source</h3>
+    <div class="code-box">
+# Find which machine pushed malware to HR-PC01
+Query: Event ID 4624 (Logon) on HR-PC01 around 05:30:28 UTC
+Look for: Logon Type 3 (Network), Source IP
+Result: This IP is the attacker's pivot point
+    </div>
+
+    <h2>Remediation Recommendations</h2>
+
+    <h3>Immediate (Within Hours)</h3>
+    <ul>
+      <li>✅ Patch CVE-2021-34527 on ALL systems (patches available since July 2021)</li>
+      <li>✅ Force password reset for all accounts that touched HR-PC01</li>
+      <li>✅ Re-enable Defender and LSA protection on affected systems</li>
+      <li>✅ Remove malicious service and binary after imaging</li>
+      <li>✅ Deploy EDR to all endpoints for enhanced visibility</li>
+    </ul>
+
+    <h3>Short-Term (Within Days)</h3>
+    <ul>
+      <li>Full forensic imaging of HR-PC01 before remediation</li>
+      <li>Submit GzgBIwUb.exe to sandbox/VirusTotal for analysis</li>
+      <li>Review firewall logs for outbound C2 connections</li>
+      <li>Audit HR data access - check for data exfiltration</li>
+      <li>Implement network segmentation (isolate HR systems)</li>
+    </ul>
+
+    <h3>Long-Term (Within Weeks)</h3>
+    <ul>
+      <li>Deploy LAPS for local admin password management</li>
+      <li>Implement tiered administration model</li>
+      <li>Disable SMB between workstations via GPO</li>
+      <li>Deploy application whitelisting (block execution in Temp/Windows)</li>
+      <li>Enhanced Sysmon configuration for better visibility</li>
+      <li>Regular vulnerability scanning and patch management</li>
+    </ul>
+
+    <h2>Skills & Knowledge Gained</h2>
+
+    <h3>SOC L2 Competencies</h3>
+    <ul>
+      <li>Multi-alert correlation and pattern recognition</li>
+      <li>Attack timeline reconstruction from fragmented logs</li>
+      <li>Root cause analysis methodology</li>
+      <li>Network-wide threat hunting techniques</li>
+      <li>Incident severity classification criteria</li>
+      <li>Escalation and stakeholder communication</li>
+    </ul>
+
+    <h3>Technical Analysis Skills</h3>
+    <ul>
+      <li>CVE-2021-34527 (PrintNightmare) forensic indicators</li>
+      <li>Windows Event log interpretation (4624, 7045)</li>
+      <li>Sysmon telemetry analysis (Event IDs 1, 11, 13)</li>
+      <li>Process parent-child relationship analysis</li>
+      <li>SMB lateral movement detection techniques</li>
+      <li>Living-off-the-land binary (LOLBin) detection</li>
+    </ul>
+
+    <h3>MITRE ATT&CK Framework Application</h3>
+    <ul>
+      <li>Mapped 8 techniques across 6 tactics</li>
+      <li>Identified multi-stage kill chain progression</li>
+      <li>Correlated techniques to specific evidence</li>
+      <li>Used framework to predict next attack stages</li>
+    </ul>
+
+    <h2>Why This Investigation Matters</h2>
+
+    <div class="success-box">
+      <strong>Career Demonstration:</strong><br><br>
+      
+      This investigation proves advanced SOC L2 capabilities:<br><br>
+      
+      ✅ <strong>Didn't just acknowledge alerts</strong> - Investigated root cause and full scope<br>
+      ✅ <strong>Correlated 7 different alerts</strong> - Built coherent attack narrative<br>
+      ✅ <strong>Identified vulnerability</strong> - CVE-2021-34527 exploitation<br>
+      ✅ <strong>Detected lateral movement</strong> - Recognized network-wide threat<br>
+      ✅ <strong>Reconstructed timeline</strong> - 18-minute attack chain with precision<br>
+      ✅ <strong>Provided actionable intel</strong> - Clear containment and remediation steps<br><br>
+      
+      This is the analytical depth that separates L1 from L2 SOC analysts.
+    </div>
+
+    <h2>Real-World Comparison</h2>
+
+    <p>
+      PrintNightmare (CVE-2021-34527) was exploited in real-world attacks by:
+    </p>
+
+    <ul>
+      <li><strong>Magniber Ransomware</strong> - Used PrintNightmare for initial access in July 2021</li>
+      <li><strong>Vice Society Ransomware</strong> - Leveraged unpatched Print Spooler vulnerabilities</li>
+      <li><strong>Various APT Groups</strong> - Incorporated into post-exploitation frameworks</li>
+    </ul>
+
+    <p>
+      The attack chain I investigated mirrors documented TTPs from these threat actors - proving this lab represents real-world attack patterns.
+    </p>
+
+    <h2>Conclusion</h2>
+
+    <p>
+      This investigation demonstrates the complete SOC L2 incident response workflow:
+    </p>
+
+    <ol>
+      <li><strong>Alert Review:</strong> Identified high-severity alert cluster</li>
+      <li><strong>Correlation:</strong> Linked disparate events to single attack</li>
+      <li><strong>Analysis:</strong> Determined attack techniques and tools</li>
+      <li><strong>Investigation:</strong> Expanded scope, found root cause</li>
+      <li><strong>Documentation:</strong> Reconstructed complete timeline</li>
+      <li><strong>Response:</strong> Provided containment and remediation</li>
+    </ol>
+
+    <div class="info-box">
+      <strong>For Recruiters:</strong><br><br>
+      
+      You're seeing someone who can:<br>
+      • Take a pile of SIEM alerts and reconstruct what actually happened<br>
+      • Identify the vulnerability that started everything<br>
+      • Understand both offensive and defensive perspectives<br>
+      • Communicate complex technical findings clearly<br>
+      • Provide actionable intelligence for incident response<br><br>
+      
+      This is exactly the analytical capability your SOC team needs.
+    </div>
+
+  </main>
+
+</body>
+</html>
