@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malware Analysis: Creating YARA Detection Rules | Waqas Ibrahim</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+        }
+
+        /* NAV - matches your site */
+        nav {
+            background: rgba(13,17,23,0.95);
+            border-bottom: 1px solid #21262d;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        .nav-brand { color: #f0f6fc; text-decoration: none; font-weight: 700; font-size: 1.1rem; }
+        nav ul { list-style: none; display: flex; gap: 2rem; }
+        nav ul li a { color: #8b949e; text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+        nav ul li a:hover { color: #58a6ff; }
+
+        /* HERO */
+        .hero {
+            background: linear-gradient(135deg, #0d1117 0%, #1a0d2e 40%, #0d1117 100%);
+            padding: 4rem 2rem 3rem;
+            border-bottom: 1px solid #21262d;
+        }
+        .hero-inner { max-width: 860px; margin: 0 auto; }
+        .badge {
+            display: inline-block;
+            background: rgba(139,92,246,0.15);
+            border: 1px solid rgba(139,92,246,0.4);
+            color: #a78bfa;
+            padding: 0.3rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 1.2rem;
+        }
+        .hero h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #f0f6fc;
+            line-height: 1.25;
+            margin-bottom: 0.8rem;
+        }
+        .hero-sub {
+            color: #8b949e;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .mitre-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .mitre-tag {
+            background: #161b22;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            padding: 0.2rem 0.7rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-family: 'Courier New', monospace;
+        }
+        .mitre-tag.purple { border-color: rgba(139,92,246,0.5); color: #a78bfa; }
+
+        /* MAIN */
+        .main { max-width: 860px; margin: 0 auto; padding: 2.5rem 2rem; }
+
+        /* SKILLS GRID */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 1rem;
+            margin: 0 0 2.5rem 0;
+        }
+        .skill-card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 1.2rem;
+        }
+        .skill-card h3 {
+            color: #a78bfa;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+        }
+        .skill-card ul { list-style: none; }
+        .skill-card li {
+            color: #8b949e;
+            font-size: 0.85rem;
+            padding: 0.15rem 0 0.15rem 1rem;
+            position: relative;
+        }
+        .skill-card li::before { content: "•"; color: #a78bfa; position: absolute; left: 0; }
+
+        /* SECTION HEADINGS */
+        .section-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #f0f6fc;
+            margin: 2.5rem 0 1rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid #21262d;
+        }
+        h3.sub-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #e6edf3;
+            margin: 1.5rem 0 0.7rem;
+        }
+
+        p { color: #8b949e; font-size: 0.95rem; margin-bottom: 1rem; line-height: 1.8; }
+
+        /* SUMMARY BOX */
+        .summary-box {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-left: 3px solid #a78bfa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0 2rem;
+        }
+        .summary-box h3 {
+            color: #a78bfa;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        .summary-row { display: flex; gap: 1rem; margin-bottom: 0.55rem; font-size: 0.88rem; }
+        .summary-label { color: #484f58; min-width: 130px; flex-shrink: 0; }
+        .summary-value { color: #c9d1d9; }
+
+        /* CODE BLOCKS */
+        pre {
+            background: #010409;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            padding: 1.2rem;
+            overflow-x: auto;
+            margin: 1rem 0 1.5rem;
+            font-size: 0.82rem;
+            line-height: 1.65;
+        }
+        code { font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace; color: #c9d1d9; }
+        .c { color: #6e7681; } /* comment */
+        .k { color: #ff7b72; } /* keyword */
+        .s { color: #a5d6ff; } /* string */
+        .n { color: #79c0ff; } /* number/address */
+        .fn { color: #d2a8ff; } /* function name */
+
+        /* STEP BOXES */
+        .step-box {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.2rem 0;
+        }
+        .step-header { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; }
+        .step-num {
+            background: #a78bfa;
+            color: #0d1117;
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; font-weight: 800;
+            flex-shrink: 0;
+        }
+        .step-title { color: #f0f6fc; font-weight: 600; font-size: 0.95rem; }
+        .step-box p { color: #8b949e; font-size: 0.88rem; }
+
+        /* ALERT BOXES */
+        .alert {
+            border-radius: 6px;
+            padding: 0.9rem 1.1rem;
+            margin: 1rem 0;
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+        .alert-green { background: rgba(63,185,80,0.08); border: 1px solid rgba(63,185,80,0.25); color: #3fb950; }
+        .alert-purple { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.25); color: #a78bfa; }
+        .alert-yellow { background: rgba(210,153,34,0.08); border: 1px solid rgba(210,153,34,0.25); color: #d29922; }
+        .alert-red { background: rgba(248,81,73,0.08); border: 1px solid rgba(248,81,73,0.25); color: #f85149; }
+
+        /* FINDING BOX */
+        .finding {
+            background: #0f2318;
+            border: 1px solid #1b4332;
+            border-left: 3px solid #3fb950;
+            border-radius: 6px;
+            padding: 1rem 1.2rem;
+            margin: 1rem 0;
+        }
+        .finding h4 { color: #3fb950; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.4rem; }
+        .finding p { color: #8b949e; font-size: 0.88rem; margin: 0; }
+
+        /* TABLES */
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.85rem; }
+        th {
+            background: #161b22;
+            color: #a78bfa;
+            padding: 0.65rem 1rem;
+            text-align: left;
+            border: 1px solid #21262d;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        td { padding: 0.65rem 1rem; border: 1px solid #21262d; color: #8b949e; }
+        td code { background: #010409; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.8rem; color: #a5d6ff; }
+        tr:nth-child(even) td { background: #0d1117; }
+
+        /* IOC GRID */
+        .ioc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.8rem; margin: 1rem 0 1.5rem; }
+        .ioc-card {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            padding: 0.9rem 1rem;
+        }
+        .ioc-type { color: #a78bfa; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.4rem; font-weight: 600; }
+        .ioc-value { font-family: monospace; font-size: 0.8rem; color: #3fb950; word-break: break-all; }
+
+        /* SCREENSHOTS */
+        .screenshot {
+            margin: 1.5rem 0;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .screenshot img { width: 100%; display: block; }
+        .screenshot-caption {
+            background: #161b22;
+            padding: 0.6rem 1rem;
+            font-size: 0.8rem;
+            color: #6e7681;
+            border-top: 1px solid #21262d;
+            font-style: italic;
+        }
+
+        /* TIMELINE */
+        .timeline { margin: 1.2rem 0 1.5rem; }
+        .tl-item { display: flex; gap: 1rem; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #21262d; }
+        .tl-item:last-child { border-bottom: none; margin-bottom: 0; }
+        .tl-dot { width: 10px; height: 10px; border-radius: 50%; background: #a78bfa; flex-shrink: 0; margin-top: 7px; }
+        .tl-dot.green { background: #3fb950; }
+        .tl-content h4 { color: #e6edf3; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.2rem; }
+        .tl-content p { color: #6e7681; font-size: 0.83rem; margin: 0; }
+
+        /* CONCLUSION GRID */
+        .conclusion-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin: 1.2rem 0; }
+        .conclusion-card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+        .conclusion-card .icon { font-size: 1.6rem; margin-bottom: 0.5rem; }
+        .conclusion-card h4 { color: #f0f6fc; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.3rem; }
+        .conclusion-card p { color: #6e7681; font-size: 0.78rem; margin: 0; }
+
+        /* FOOTER */
+        footer {
+            background: #161b22;
+            border-top: 1px solid #21262d;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 4rem;
+            color: #6e7681;
+            font-size: 0.85rem;
+        }
+        footer a { color: #a78bfa; text-decoration: none; }
+
+        @media (max-width: 640px) {
+            .hero h1 { font-size: 1.5rem; }
+            nav ul { gap: 1rem; }
+            .summary-row { flex-direction: column; gap: 0.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <a href="https://waqashacks.github.io/index.html" class="nav-brand">Waqas Ibrahim</a>
+    <ul>
+        <li><a href="https://waqashacks.github.io/index.html">Home</a></li>
+        <li><a href="https://waqashacks.github.io/index.html#projects">SOC Labs</a></li>
+        <li><a href="https://waqashacks.github.io/index.html#about">About</a></li>
+        <li><a href="https://waqashacks.github.io/index.html#contact">Contact</a></li>
+    </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+    <div class="hero-inner">
+        <div class="badge">Malware Analysis</div>
+        <h1>Creating YARA Detection Rules From Malware Analysis</h1>
+        <p class="hero-sub">IOC Extraction → Automated Rule Generation → Validated Detection | Real Malware Samples on REMnux</p>
+        <div class="mitre-tags">
+            <span class="mitre-tag purple">YARA Rules</span>
+            <span class="mitre-tag purple">Sigma Rules</span>
+            <span class="mitre-tag">T1497.001 — Sandbox Evasion</span>
+            <span class="mitre-tag">T1105 — Ingress Tool Transfer</span>
+            <span class="mitre-tag">T1055 — Process Injection</span>
+            <span class="mitre-tag">T1547.001 — Registry Run Keys</span>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+    <!-- Skills Grid -->
+    <div class="skills-grid">
+        <div class="skill-card">
+            <h3>🔍 Detection Engineering</h3>
+            <ul>
+                <li>YARA rule development</li>
+                <li>yarGen automated generation</li>
+                <li>IOC pattern matching</li>
+                <li>Rule validation and testing</li>
+            </ul>
+        </div>
+        <div class="skill-card">
+            <h3>🧪 Malware Analysis</h3>
+            <ul>
+                <li>Static string extraction</li>
+                <li>Unique IOC identification</li>
+                <li>Malware family attribution</li>
+                <li>Hash-based fingerprinting</li>
+            </ul>
+        </div>
+        <div class="skill-card">
+            <h3>📋 Sigma & Sysmon</h3>
+            <ul>
+                <li>Sigma rule authoring</li>
+                <li>Sysmon event analysis</li>
+                <li>Process creation detection</li>
+                <li>SIEM-ready rule format</li>
+            </ul>
+        </div>
+        <div class="skill-card">
+            <h3>🎯 Threat Intelligence</h3>
+            <ul>
+                <li>C2 infrastructure IOCs</li>
+                <li>Malware family correlation</li>
+                <li>TTP-based detection logic</li>
+                <li>MITRE ATT&CK mapping</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="summary-box">
+        <h3>📋 Investigation Summary</h3>
+        <div class="summary-row"><span class="summary-label">Objective</span><span class="summary-value">Generate YARA and Sigma detection rules directly from malware analysis findings</span></div>
+        <div class="summary-row"><span class="summary-label">Samples Analysed</span><span class="summary-value">shell.exe (C2 dropper with process injection) and dharma_sample.exe (Dharma/Crysis ransomware)</span></div>
+        <div class="summary-row"><span class="summary-label">Environment</span><span class="summary-value">REMnux Linux — dedicated isolated malware analysis VM</span></div>
+        <div class="summary-row"><span class="summary-label">Tools Used</span><span class="summary-value">yarGen, YARA, strings, IDA Free, Sysmon, Wireshark, FakeNet-NG</span></div>
+        <div class="summary-row"><span class="summary-label">Result</span><span class="summary-value">Both samples successfully detected by generated rules — zero false positives</span></div>
+        <div class="summary-row"><span class="summary-label">IOCs Found</span><span class="summary-value">2 C2 domains, 1 IP address, 1 download URL, 1 registry persistence key, 1 dropped file path, 1 unique user-agent</span></div>
+    </div>
+
+    <!-- Background -->
+    <h2 class="section-title">Background</h2>
+    <p>
+        Detection rules are the practical end product of malware analysis. After spending time understanding <em>what</em> a malware sample does — through static analysis, dynamic analysis, and code analysis — the final step is converting those findings into automated detection logic that identifies the same threat across an entire network without any manual investigation.
+    </p>
+    <p>
+        In this lab I worked with two real malware samples: <strong>shell.exe</strong> — a C2 dropper that performs sandbox detection, downloads a second-stage payload, establishes registry persistence, and injects shellcode into notepad.exe — and <strong>dharma_sample.exe</strong> — a sample from the Dharma/Crysis ransomware family. Both samples were previously fully analysed using static strings analysis and IDA code analysis. This post covers turning those findings into working YARA rules.
+    </p>
+    <div class="alert alert-red">
+        <strong>⚠️ Lab Safety:</strong> All analysis was conducted on REMnux Linux — a purpose-built isolated malware analysis distribution. No malware was executed outside a controlled, network-isolated virtual machine environment. All samples are treated as live malware.
+    </div>
+
+    <!-- What is YARA -->
+    <h2 class="section-title">What is YARA?</h2>
+    <p>
+        YARA (Yet Another Recursive Acronym) is an open-source pattern matching tool used to identify and classify malware in files, processes, and memory. Think of it as a highly advanced search — instead of searching for one word in one document, you define complex patterns that fire across thousands of files simultaneously.
+    </p>
+    <p>A YARA rule has three sections:</p>
+
+    <pre><code><span class="k">rule</span> ExampleMalwareDetection {
+
+    <span class="k">meta:</span>
+        <span class="c">// Documentation only — does not affect detection logic</span>
+        description = <span class="s">"Detects shell.exe C2 dropper"</span>
+        author      = <span class="s">"Waqas Ibrahim"</span>
+        date        = <span class="s">"2026-04-19"</span>
+
+    <span class="k">strings:</span>
+        <span class="c">// Patterns to match — text, hex bytes, or regex</span>
+        $a = <span class="s">"http://ms-windows-update.com/svchost.exe"</span> fullword ascii
+        $b = <span class="s">"45.33.32.156"</span> fullword ascii
+        $c = <span class="s">"Connection sent to C2"</span> fullword ascii
+
+    <span class="k">condition:</span>
+        <span class="c">// When to fire the alert</span>
+        uint16(<span class="n">0</span>) == <span class="n">0x5a4d</span> and   <span class="c">// File starts with MZ = Windows PE</span>
+        filesize &lt; <span class="n">60</span>KB         and   <span class="c">// Must be under 60KB</span>
+        <span class="n">2</span> of them                      <span class="c">// At least 2 strings must match</span>
+}</code></pre>
+
+    <table>
+        <tr><th>Keyword</th><th>What it means</th></tr>
+        <tr><td><code>fullword</code></td><td>Must be a complete word — not embedded inside a larger string</td></tr>
+        <tr><td><code>ascii</code></td><td>Standard plain text string</td></tr>
+        <tr><td><code>wide</code></td><td>Unicode string (Windows commonly stores strings in unicode)</td></tr>
+        <tr><td><code>nocase</code></td><td>Case insensitive — matches regardless of capitalisation</td></tr>
+        <tr><td><code>uint16(0) == 0x5a4d</code></td><td>First two bytes of file are MZ — confirms Windows executable</td></tr>
+        <tr><td><code>1 of ($x*)</code></td><td>At least one string with the $x prefix must match</td></tr>
+        <tr><td><code>4 of them</code></td><td>At least 4 strings from the strings section must match</td></tr>
+    </table>
+
+    <!-- IOCs Found -->
+    <h2 class="section-title">IOCs Identified During Previous Analysis</h2>
+    <p>
+        Before generating any rule, I had already identified the following IOCs through static strings analysis and code analysis in IDA. Every one of these became a candidate detection string for the YARA rule. The key principle is: <strong>YARA rules are only as good as the IOC extraction that preceded them.</strong>
+    </p>
+
+    <div class="ioc-grid">
+        <div class="ioc-card">
+            <div class="ioc-type">🌐 C2 Download URL</div>
+            <div class="ioc-value">http://ms-windows-update.com/svchost.exe</div>
+        </div>
+        <div class="ioc-card">
+            <div class="ioc-type">🌐 DNS Sandbox Check</div>
+            <div class="ioc-value">iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea.com</div>
+        </div>
+        <div class="ioc-card">
+            <div class="ioc-type">🖥️ C2 IP : Port</div>
+            <div class="ioc-value">45.33.32.156 : 31337</div>
+        </div>
+        <div class="ioc-card">
+            <div class="ioc-type">🔑 Registry Persistence</div>
+            <div class="ioc-value">SOFTWARE\Microsoft\Windows\CurrentVersion\Run — WindowsUpdater</div>
+        </div>
+        <div class="ioc-card">
+            <div class="ioc-type">📁 Dropped File Path</div>
+            <div class="ioc-value">%TEMP%\svchost.exe</div>
+        </div>
+        <div class="ioc-card">
+            <div class="ioc-type">🕵️ Fake HTTP User-Agent</div>
+            <div class="ioc-value">Windows-Update/7.6.7600.256 [HOSTNAME]</div>
+        </div>
+        <div class="ioc-card">
+            <div class="ioc-type">🔍 VM Detection Registry</div>
+            <div class="ioc-value">SOFTWARE\VMware, Inc.\VMware Tools</div>
+        </div>
+        <div class="ioc-card">
+            <div class="ioc-type">💬 C2 Success Message</div>
+            <div class="ioc-value">Connection sent to C2</div>
+        </div>
+    </div>
+
+    <!-- Step by Step -->
+    <h2 class="section-title">Step-by-Step: Generating the YARA Rule with yarGen</h2>
+    <p>
+        yarGen is a tool by Florian Roth that automates YARA rule generation. It extracts all strings from a malware sample, then filters them against a database of over 12 million strings found in legitimate software. What remains are strings unique to the malware — strong candidates for a detection rule.
+    </p>
+
+    <!-- Step 1 -->
+    <div class="step-box">
+        <div class="step-header">
+            <div class="step-num">1</div>
+            <div class="step-title">Create a Dedicated Folder and Copy the Sample</div>
+        </div>
+        <p>yarGen analyses everything inside the folder you point it at. Creating a dedicated Test directory ensures it only processes our target sample.</p>
+        <pre><code>mkdir /home/htb-student/Samples/MalwareAnalysis/Test
+
+cp /home/htb-student/Samples/MalwareAnalysis/shell.exe \
+   /home/htb-student/Samples/MalwareAnalysis/Test/</code></pre>
+
+        <div class="screenshot">
+            <img src="yara2.png" alt="mkdir command creating Test directory and ls showing directory contents">
+            <div class="screenshot-caption">Creating the Test directory and confirming shell.exe is copied — yarGen requires an isolated folder per sample</div>
+        </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step-box">
+        <div class="step-header">
+            <div class="step-num">2</div>
+            <div class="step-title">Run yarGen Against the Sample Directory</div>
+        </div>
+        <p>yarGen loads its goodware databases (12M+ strings from legitimate software), scans shell.exe for all strings, removes anything that appears in normal programs, then outputs a ready-to-use YARA rule containing only malware-unique strings.</p>
+        <pre><code>cd ~/yarGen-0.23.4
+sudo python3 yarGen.py -m /home/htb-student/Samples/MalwareAnalysis/Test/</code></pre>
+        <p>The <code>-m</code> flag specifies the malware folder. Database loading takes a few minutes — this filtering step is what makes the output precise rather than noisy.</p>
+
+        <div class="screenshot">
+            <img src="yara3.png" alt="yarGen running — database loading output showing 12 million goodware strings loaded">
+            <div class="screenshot-caption">yarGen loading goodware databases — each entry is a string found in legitimate software that gets filtered out of the final rule</div>
+        </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step-box">
+        <div class="step-header">
+            <div class="step-num">3</div>
+            <div class="step-title">Review the Generated Rule</div>
+        </div>
+        <p>yarGen outputs a file named <code>yargen_rules.yar</code>. Reading through it, every string selected directly maps to IOCs I had already identified during code analysis — confirming the rule is well-targeted and meaningful rather than full of random strings.</p>
+        <pre><code>cat yargen_rules.yar</code></pre>
+
+        <div class="screenshot">
+            <img src="yara4.png" alt="Generated yargen_rules.yar showing the complete shell.exe YARA rule with all detected strings">
+            <div class="screenshot-caption">The generated shell.exe YARA rule — every highlighted string was previously identified as an IOC during IDA code analysis and dynamic analysis</div>
+        </div>
+    </div>
+
+    <!-- The Full Rule Annotated -->
+    <h2 class="section-title">The Generated Rule — Fully Annotated</h2>
+    <p>Below is the complete generated rule with annotations explaining why each string is significant as a detection indicator:</p>
+
+    <pre><code><span class="k">rule</span> <span class="fn">_home_htb_student_Samples_MalwareAnalysis_Test_shell</span> {
+
+   <span class="k">meta:</span>
+      description = <span class="s">"Test - file shell.exe"</span>
+      author      = <span class="s">"yarGen Rule Generator"</span>
+      date        = <span class="s">"2026-04-19"</span>
+      hash1       = <span class="s">"bd841e796feed0088ae670284ab991f212cf709f2391310a85443b2ed1312bda"</span>
+
+   <span class="k">strings:</span>
+      $x1  = <span class="s">"C:\\Windows\\System32\\cmd.exe"</span> fullword ascii
+             <span class="c">// cmd.exe used to execute ping sleep — delays C2 connection</span>
+
+      $s2  = <span class="s">"http://ms-windows-update.com/svchost.exe"</span> fullword ascii
+             <span class="c">// C2 download URL — second stage payload retrieved from here</span>
+
+      $s4  = <span class="s">"/k ping 127.0.0.1 -n 5"</span> fullword ascii
+             <span class="c">// 5-second delay mechanism before C2 activity begins</span>
+
+      $s5  = <span class="s">"iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea.com"</span> fullword ascii
+             <span class="c">// WannaCry kill switch domain — DNS sandbox detection check</span>
+
+      $s9  = <span class="s">"C:\\Program Files\\VMware\\VMware Tools\\"</span> fullword ascii
+             <span class="c">// File path checked for VMware installation — VM detection</span>
+
+      $s10 = <span class="s">"Connection sent to C2"</span> fullword ascii
+             <span class="c">// MessageBox displayed after successful notepad.exe process injection</span>
+
+      $s14 = <span class="s">"45.33.32.156"</span> fullword ascii
+             <span class="c">// C2 IP address — TCP connectivity check on port 31337</span>
+
+      $s19 = <span class="s">"SOFTWARE\\VMware, Inc.\\VMware Tools"</span> fullword ascii
+             <span class="c">// Registry key queried via RegOpenKeyExA for sandbox detection</span>
+
+      $s20 = <span class="s">"Windows-Update/7.6.7600.256 %s"</span> fullword ascii
+             <span class="c">// Custom HTTP User-Agent — %s replaced with GetComputerNameA result</span>
+
+   <span class="k">condition:</span>
+      uint16(<span class="n">0</span>) == <span class="n">0x5a4d</span> and   <span class="c">// Must be a Windows PE file (starts with MZ)</span>
+      filesize &lt; <span class="n">60</span>KB         and   <span class="c">// Sample is small — dropper stage only</span>
+      <span class="n">1</span> of ($x*)              and   <span class="c">// cmd.exe string must be present ($x = high confidence)</span>
+      <span class="n">4</span> of them                     <span class="c">// At least 4 total strings must match</span>
+}</code></pre>
+
+    <div class="finding">
+        <h4>✅ Key Observation</h4>
+        <p>Every string in this rule was an IOC discovered during earlier code analysis in IDA and confirmed through dynamic analysis with Wireshark and ProcMon. The YARA rule is a formalised, automated version of those manual findings — directly converting analyst knowledge into deployable detection logic.</p>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step-box">
+        <div class="step-header">
+            <div class="step-num">4</div>
+            <div class="step-title">Validate the Rule — Scan the Malware Directory</div>
+        </div>
+        <p>Running the rule against the full MalwareAnalysis directory confirms shell.exe is detected and no false positives fire against other files present.</p>
+        <pre><code>yara /home/htb-student/yarGen-0.23.4/yargen_rules.yar \
+     /home/htb-student/Samples/MalwareAnalysis/
+
+<span class="c">Output:</span>
+_home_htb_student_Samples_MalwareAnalysis_Test_shell
+/home/htb-student/Samples/MalwareAnalysis/shell.exe</code></pre>
+        <div class="alert alert-green">
+            <strong>✅ Confirmed:</strong> shell.exe detected successfully. No false positives fired against other files in the directory. Rule is ready for deployment.
+        </div>
+    </div>
+
+    <!-- Dharma -->
+    <h2 class="section-title">Repeat: YARA Rule for Dharma Ransomware</h2>
+    <p>
+        I repeated the exact same workflow for <strong>dharma_sample.exe</strong> — a sample from the Dharma/Crysis ransomware family. The most notable string yarGen selected was one I had already flagged during strings analysis: a PDB debug path accidentally left behind by the developer.
+    </p>
+
+    <div class="screenshot">
+        <img src="yara5.png" alt="Generated YARA rule for dharma_sample.exe showing PDB path as primary detection string">
+        <div class="screenshot-caption">The dharma_sample.exe YARA rule — the PDB path directly attributes this sample to the Crysis ransomware family through a single string</div>
+    </div>
+
+    <pre><code><span class="k">rule</span> <span class="fn">dharma_sample</span> {
+
+   <span class="k">meta:</span>
+      description = <span class="s">"Test2 - file dharma_sample.exe"</span>
+      date        = <span class="s">"2026-04-19"</span>
+      hash1       = <span class="s">"bff6a1000a86f8edf3673d576786ec75b80bed0c458a8ca0bd52d12b74099071"</span>
+
+   <span class="k">strings:</span>
+      $x1  = <span class="s">"C:\\crysis\\Release\\PDB\\payload.pdb"</span> fullword ascii
+             <span class="c">// PDB debug path — directly attributes sample to Crysis/Dharma family</span>
+      <span class="c">// + 19 additional unique strings automatically selected by yarGen</span>
+
+   <span class="k">condition:</span>
+      uint16(<span class="n">0</span>) == <span class="n">0x5a4d</span> and filesize &lt; <span class="n">300</span>KB and
+      <span class="n">1</span> of ($x*) and <span class="n">4</span> of them
+}</code></pre>
+
+    <div class="finding">
+        <h4>✅ Malware Family Attribution from One String</h4>
+        <p>The PDB path <code>C:\crysis\Release\PDB\payload.pdb</code> directly links dharma_sample.exe to the Crysis/Dharma ransomware family. This single artifact — found during basic strings analysis before touching a debugger — provided complete malware family attribution. This is why thorough static analysis always comes first.</p>
+    </div>
+
+    <!-- Sigma -->
+    <h2 class="section-title">Sigma Rules — Detecting Behaviour in Event Logs</h2>
+    <p>
+        While YARA detects malicious <em>files</em>, Sigma detects malicious <em>behaviour</em> in event logs. Sigma rules are written once in a standardised format and can be deployed to any SIEM platform — Splunk, Elastic, Wazuh, Microsoft Sentinel — making them highly portable across tools.
+    </p>
+    <p>
+        Based on what shell.exe does at runtime, here is a Sigma rule targeting the file-drop behaviour captured in Sysmon Event ID 11:
+    </p>
+
+    <pre><code><span class="n">title:</span> Suspicious svchost.exe Dropped in User Temp Directory
+<span class="n">status:</span> experimental
+<span class="n">description:</span> >
+    Detects svchost.exe being created in the user Temp directory
+    by a non-system process. Indicative of dropper malware behaviour
+    as seen in shell.exe analysis.
+
+<span class="n">logsource:</span>
+    category: file_event
+    product: windows
+
+<span class="n">detection:</span>
+    selection:
+        TargetFilename|endswith: <span class="s">'\AppData\Local\Temp\svchost.exe'</span>
+    condition: selection
+
+<span class="n">falsepositives:</span>
+    - Legitimate applications dropping components to Temp (very rare)
+
+<span class="n">level:</span> high
+<span class="n">tags:</span>
+    - attack.execution
+    - attack.t1105</code></pre>
+
+    <!-- Sysmon Evidence -->
+    <h2 class="section-title">Sysmon Evidence — What the Logs Confirmed</h2>
+    <p>
+        With Sysmon running during dynamic analysis, the following events were captured in response to shell.exe executing. Each Sysmon event directly corresponds to an IOC identified during static analysis — cross-validating the findings across two independent methods.
+    </p>
+
+    <table>
+        <tr><th>Sysmon Event ID</th><th>What Happened</th><th>shell.exe Activity</th><th>MITRE</th></tr>
+        <tr><td>Event ID 1 — Process Created</td><td>New process spawned</td><td>svchost.exe created in TEMP — parent was shell.exe</td><td>T1105</td></tr>
+        <tr><td>Event ID 11 — File Created</td><td>File written to disk</td><td>shell.exe (PID 6508) dropped svchost.exe to Temp directory</td><td>T1105</td></tr>
+        <tr><td>Event ID 3 — Network Connection</td><td>TCP connection made</td><td>Connected to ms-windows-update.com:80 and 45.33.32.156:31337</td><td>T1071.001</td></tr>
+        <tr><td>Event ID 10 — Process Access</td><td>Process opened another</td><td>shell.exe accessed notepad.exe with full access rights (0x1F3FFF)</td><td>T1055</td></tr>
+        <tr><td>Event ID 13 — Registry Modified</td><td>Registry value written</td><td>WindowsUpdater persistence key added to CurrentVersion\Run</td><td>T1547.001</td></tr>
+    </table>
+
+    <div class="alert alert-yellow">
+        <strong>💡 Analyst Note:</strong> Sysmon is the most valuable Windows log source for malware detection after SIEM alerts. Deploying Sysmon with the SwiftOnSecurity or Olaf Hartong configuration dramatically improves visibility for writing precise Sigma rules. Without Sysmon, process command-line arguments and file creation events are largely invisible.
+    </div>
+
+    <!-- Complete IOC Table -->
+    <h2 class="section-title">Complete IOC Summary — shell.exe</h2>
+
+    <table>
+        <tr><th>Type</th><th>IOC Value</th><th>How Found</th></tr>
+        <tr><td>SHA256</td><td><code>bd841e796feed0088ae670284ab991f212cf709f2391310a85443b2ed1312bda</code></td><td>sha256sum command</td></tr>
+        <tr><td>Domain</td><td>ms-windows-update.com</td><td>strings analysis + IDA + Wireshark</td></tr>
+        <tr><td>Domain</td><td>iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea.com</td><td>strings + IDA getaddrinfo call</td></tr>
+        <tr><td>IP:Port</td><td>45.33.32.156:31337</td><td>IDA connect() call + Wireshark</td></tr>
+        <tr><td>URL</td><td>http://ms-windows-update.com/svchost.exe</td><td>IDA InternetOpenUrlA call</td></tr>
+        <tr><td>File Path</td><td>%TEMP%\svchost.exe</td><td>IDA GetTempPath + Sysmon Event 11</td></tr>
+        <tr><td>Registry Key</td><td>SOFTWARE\Microsoft\Windows\CurrentVersion\Run — WindowsUpdater</td><td>IDA RegSetValueExA + Sysmon Event 13</td></tr>
+        <tr><td>User-Agent</td><td>Windows-Update/7.6.7600.256 [HOSTNAME]</td><td>IDA sprintf + Wireshark HTTP stream</td></tr>
+        <tr><td>Registry Check</td><td>SOFTWARE\VMware, Inc.\VMware Tools</td><td>IDA RegOpenKeyExA + ProcMon</td></tr>
+    </table>
+
+    <!-- MITRE Mapping -->
+    <h2 class="section-title">MITRE ATT&amp;CK Mapping</h2>
+
+    <table>
+        <tr><th>Technique</th><th>ID</th><th>Tactic</th><th>Evidence from Analysis</th></tr>
+        <tr><td>Virtualization/Sandbox Evasion: System Checks</td><td>T1497.001</td><td>Defense Evasion</td><td>VMware Tools registry check via RegOpenKeyExA</td></tr>
+        <tr><td>Ingress Tool Transfer</td><td>T1105</td><td>Command and Control</td><td>Downloads svchost.exe from ms-windows-update.com</td></tr>
+        <tr><td>Process Injection</td><td>T1055</td><td>Defense Evasion / Execution</td><td>Shellcode injected into notepad.exe via VirtualAllocEx + WriteProcessMemory</td></tr>
+        <tr><td>Boot or Logon Autostart: Registry Run Keys</td><td>T1547.001</td><td>Persistence</td><td>WindowsUpdater value added to CurrentVersion\Run</td></tr>
+        <tr><td>Application Layer Protocol: Web Protocols</td><td>T1071.001</td><td>Command and Control</td><td>HTTP C2 with custom User-Agent including hostname</td></tr>
+        <tr><td>System Binary Proxy Execution</td><td>T1218</td><td>Defense Evasion</td><td>cmd.exe /k ping — used as delay mechanism</td></tr>
+    </table>
+
+    <!-- Conclusion -->
+    <h2 class="section-title">Conclusion</h2>
+    <p>
+        This walkthrough demonstrates the complete detection engineering workflow that follows malware analysis. The process is linear and repeatable: analyse the sample → extract IOCs → generate detection rules → validate → deploy.
+    </p>
+
+    <div class="timeline">
+        <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-content">
+                <h4>Static Analysis → IOC Extraction</h4>
+                <p>strings command and IDA code analysis revealed C2 URLs, IP addresses, registry paths, and unique behavioral strings</p>
+            </div>
+        </div>
+        <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-content">
+                <h4>Dynamic Analysis → IOC Validation</h4>
+                <p>Sysmon logs and Wireshark traffic independently confirmed every IOC found during static analysis — cross-validated across two methods</p>
+            </div>
+        </div>
+        <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-content">
+                <h4>IOCs → YARA Rule Generation</h4>
+                <p>yarGen automated rule creation — filtered against 12M+ legitimate software strings to eliminate noise and produce precise detection logic</p>
+            </div>
+        </div>
+        <div class="tl-item">
+            <div class="tl-dot green"></div>
+            <div class="tl-content">
+                <h4>Validation → Confirmed Detection</h4>
+                <p>Rules successfully detected both shell.exe and dharma_sample.exe with zero false positives — ready for deployment to production</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="conclusion-grid">
+        <div class="conclusion-card">
+            <div class="icon">🎯</div>
+            <h4>2 Samples Analysed</h4>
+            <p>shell.exe (C2 dropper) and dharma_sample.exe (ransomware)</p>
+        </div>
+        <div class="conclusion-card">
+            <div class="icon">🔍</div>
+            <h4>8+ IOCs Extracted</h4>
+            <p>Domains, IPs, URLs, file paths, registry keys, user-agents</p>
+        </div>
+        <div class="conclusion-card">
+            <div class="icon">📋</div>
+            <h4>2 YARA Rules</h4>
+            <p>Generated, annotated and validated against live samples</p>
+        </div>
+        <div class="conclusion-card">
+            <div class="icon">⚡</div>
+            <h4>6 MITRE Techniques</h4>
+            <p>Mapped across evasion, C2, execution and persistence</p>
+        </div>
+    </div>
+
+    <div class="alert alert-purple" style="margin-top:1.5rem;">
+        <strong>🔗 Tools Used:</strong>&nbsp;
+        yarGen by Florian Roth &nbsp;|&nbsp;
+        YARA (VirusTotal) &nbsp;|&nbsp;
+        REMnux Linux &nbsp;|&nbsp;
+        IDA Free &nbsp;|&nbsp;
+        Sysmon (Microsoft Sysinternals) &nbsp;|&nbsp;
+        Wireshark &nbsp;|&nbsp;
+        FakeNet-NG
+    </div>
+
+    <div class="alert alert-purple" style="margin-top:1rem;">
+        <strong>📚 References:</strong>&nbsp;
+        <a href="https://yara.readthedocs.io/en/stable/writingrules.html" style="color:#a78bfa;">YARA Documentation</a> &nbsp;|&nbsp;
+        <a href="https://github.com/Neo23x0/yarGen" style="color:#a78bfa;">yarGen by Neo23x0</a> &nbsp;|&nbsp;
+        <a href="https://github.com/SigmaHQ/sigma" style="color:#a78bfa;">Sigma HQ</a> &nbsp;|&nbsp;
+        <a href="https://github.com/The-DFIR-Report/Yara-Rules" style="color:#a78bfa;">The DFIR Report YARA Rules</a>
+    </div>
+
+</div>
+
+<footer>
+    <p>Waqas Ibrahim — Cybersecurity Graduate | SOC Analyst | Threat Detection & Incident Response</p>
+    <p style="margin-top:0.5rem;"><a href="https://waqashacks.github.io">waqashacks.github.io</a></p>
+</footer>
+
+</body>
+</html>
